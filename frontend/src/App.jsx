@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, User, Phone, CheckCircle, Lock, LogOut, ClipboardList, Utensils, MessageCircle, X, Bot, Send, Sparkles, Trash2, Users, MapPin, Loader2, CheckSquare, Image as ImageIcon, Plus, Edit, Save, FileText, Facebook, ChevronDown, CupSoda } from 'lucide-react';
+import { ShoppingBag, User, Phone, CheckCircle, Lock, LogOut, ClipboardList, Utensils, MessageCircle, X, Bot, Send, Sparkles, Trash2, Users, MapPin, Loader2, CheckSquare, Image as ImageIcon, Plus, Edit, Save, FileText, Facebook, ChevronDown, CupSoda, Star, Heart } from 'lucide-react';
 import EnhancedChatBot from './EnhancedChatBot';
 
 const DEMO_MODE = false;
@@ -391,6 +391,22 @@ ${itemsText}
         </button>
       )}
 
+      {/* Lunita Floating Button (Always Visible) */}
+      {!isBotOpen && (
+        <button
+          onClick={() => setIsBotOpen(true)}
+          className={`fixed z-40 bg-slate-900 text-white p-3 md:p-4 rounded-full shadow-2xl hover:shadow-slate-500/50 transition-all hover:scale-110 active:scale-95 flex items-center gap-2 group ${cart.length > 0 ? 'bottom-24 md:bottom-6 right-6' : 'bottom-6 right-6'}`}
+        >
+          <div className="relative">
+            <Bot size={28} className="text-rose-300" />
+            <span className="absolute top-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900 animate-pulse"></span>
+          </div>
+          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-in-out whitespace-nowrap text-sm font-bold text-rose-100">
+            ¿Ayuda?
+          </span>
+        </button>
+      )}
+
       <footer className="mt-auto py-8 text-center text-sm text-slate-500 border-t border-white/70"><p className="font-semibold text-slate-800 mb-1">Media Luna Snack Bar 🌙</p><p className="text-xs">Manzanillo, Colima • Pedidos en Línea</p></footer>
     </div>
   );
@@ -498,25 +514,151 @@ function ClientView({ products, categories, cart, onProductClick, removeFromCart
           </div>
           <CheckoutForm onCheckout={onCheckout} hasItems={cart.length > 0} formData={checkoutFormData} setFormData={setCheckoutFormData} />
         </div>
-        <SocialFeed />
+        <CommunitySection />
       </div>
     </div>
   );
 }
 
-function SocialFeed() {
-  useEffect(() => {
-    if (document.getElementById('facebook-jssdk')) return;
-    const js = document.createElement('script'); js.id = 'facebook-jssdk'; js.src = "https://connect.facebook.net/es_LA/sdk.js#xfbml=1&version=v18.0"; js.async = true; js.defer = true; js.crossOrigin = "anonymous"; document.body.appendChild(js);
-  }, []);
+// Social Media & Community Section
+function CommunitySection() {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const testimonials = [
+    { id: 1, name: "Ana P.", text: "¡Los mejores tostitos que he probado! Súper recomendados 🤤", stars: 5, date: "Hace 2 días" },
+    { id: 2, name: "Carlos M.", text: "Excelente servicio y todo muy fresco. El bowl de 1/2 litro uffff 🔥", stars: 5, date: "Hace 1 semana" },
+    { id: 3, name: "Sofia R.", text: "Me encanta que puedo armar mi snack como yo quiera. 💖", stars: 5, date: "Hace 3 días" },
+    { id: 4, name: "Luis G.", text: "La atención de Lunita es genial, hice mi pedido súper rápido. 🤖", stars: 5, date: "Ayer" },
+    { id: 5, name: "Mariana L.", text: "Las micheladas están en su punto. Volveré seguro. 🍻", stars: 5, date: "Hace 2 semanas" },
+    { id: 6, name: "Diego F.", text: "Muy buenos precios y porciones generosas. 👌", stars: 4, date: "Hace 5 días" }
+  ];
+
+  const galleryPhotos = [
+    "/images/tostilocos.jpeg",
+    "/images/bowl_un_medio.jpeg",
+    "/images/michelada.jpeg",
+    "/images/waffles.jpeg",
+    "/images/duro_preparado.jpeg",
+    "/images/azulito.jpeg"
+  ];
+
+  const openLightbox = (index) => {
+    setCurrentImageIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % galleryPhotos.length);
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + galleryPhotos.length) % galleryPhotos.length);
+  };
+
   return (
-    <div className="glass-panel p-4 rounded-3xl text-center animate-fade-in mt-6">
-      <div className="inline-flex items-center gap-2 text-blue-700 text-sm font-bold mb-3"><Facebook size={18} /> Síguenos en Facebook</div>
-      <h3 className="text-lg font-extrabold text-slate-900 mb-3">Comunidad Media Luna 📸</h3>
-      <p className="text-xs text-slate-500 mb-4">Fotos, historias y antojos en tiempo real.</p>
-      <div className="flex justify-center w-full overflow-hidden rounded-xl border border-white/70 shadow-inner bg-white/80">
-        <div className="fb-page" data-href={FACEBOOK_PAGE_URL} data-tabs="timeline" data-width="500" data-height="480" data-small-header="false" data-adapt-container-width="true" data-hide-cover="false" data-show-facepile="true"><blockquote cite={FACEBOOK_PAGE_URL} className="fb-xfbml-parse-ignore"><a href={FACEBOOK_PAGE_URL}>Media Luna Snack Bar</a></blockquote></div>
+    <div className="space-y-6 md:space-y-8 mt-8 md:mt-12 animate-fade-in relative z-20">
+
+      {/* Testimonials Carousel (Infinite Scroll) */}
+      <div className="glass-panel p-4 md:p-6 rounded-2xl md:rounded-3xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-3 md:p-4 opacity-10 pointer-events-none">
+          <MessageCircle size={64} className="text-rose-500 md:w-[100px] md:h-[100px]" />
+        </div>
+        <div className="flex items-center gap-2 mb-4 md:mb-6">
+          <div className="bg-rose-100 p-1.5 md:p-2 rounded-full"><Star size={16} className="text-rose-500 fill-rose-500 md:w-5 md:h-5" /></div>
+          <h3 className="text-lg md:text-xl font-extrabold text-slate-900">Lo que dicen nuestros clientes</h3>
+        </div>
+
+        <div className="relative w-full overflow-hidden mask-linear-fade">
+          <div className="flex gap-3 md:gap-4 animate-marquee w-max">
+            {/* Render testimonials twice to create infinite loop effect */}
+            {[...testimonials, ...testimonials].map((t, i) => (
+              <div key={i} className="w-[240px] md:w-[320px] bg-white/60 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 relative flex-shrink-0 cursor-default">
+                <div className="flex items-center gap-1 mb-1.5 md:mb-2 text-amber-400">
+                  {[...Array(5)].map((_, idx) => (
+                    <Star key={idx} size={12} className={`md:w-[14px] md:h-[14px] ${idx < t.stars ? "fill-current" : "text-gray-300"}`} />
+                  ))}
+                </div>
+                <p className="text-xs md:text-sm text-slate-700 italic mb-2 md:mb-3 line-clamp-3">"{t.text}"</p>
+                <div className="flex justify-between items-end border-t border-slate-100 pt-1.5 md:pt-2">
+                  <span className="font-bold text-[10px] md:text-xs text-slate-900">{t.name}</span>
+                  <span className="text-[9px] md:text-[10px] text-slate-400">{t.date}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+
+      {/* Social Gallery Grid */}
+      <div className="glass-panel p-4 md:p-6 rounded-2xl md:rounded-3xl">
+        <div className="flex justify-between items-end mb-4 md:mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-0.5 md:mb-1">
+              <div className="bg-blue-100 p-1.5 md:p-2 rounded-full"><ImageIcon size={16} className="text-blue-600 md:w-5 md:h-5" /></div>
+              <h3 className="text-lg md:text-xl font-extrabold text-slate-900">Galería Social 📸</h3>
+            </div>
+            <p className="text-xs md:text-sm text-slate-500">Síguenos en Facebook para más antojos.</p>
+          </div>
+          <a
+            href={FACEBOOK_PAGE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1877F2] text-white text-xs md:text-sm font-bold rounded-lg md:rounded-xl shadow-lg shadow-blue-200 hover:bg-[#166fe5] transition-colors flex items-center gap-1.5 md:gap-2"
+          >
+            <Facebook size={16} className="md:w-[18px] md:h-[18px]" />
+            Ver Facebook
+          </a>
+        </div>
+
+        <div className="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
+          {galleryPhotos.map((src, i) => (
+            <div key={i} onClick={() => openLightbox(i)} className={`rounded-lg md:rounded-xl overflow-hidden aspect-square border border-white/50 shadow-sm group relative cursor-pointer ${i >= 4 ? 'hidden md:block' : ''}`}>
+              <img
+                src={src}
+                alt="Social Media"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }}
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Heart className="text-white fill-white drop-shadow-md scale-0 group-hover:scale-100 transition-transform duration-300 w-6 h-6 md:w-8 md:h-8" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center animate-fade-in" onClick={() => setLightboxOpen(false)}>
+          <button className="absolute top-4 right-4 bg-white/10 p-2 rounded-full text-white hover:bg-white/20 transition-colors z-[110]">
+            <X size={32} />
+          </button>
+
+          <button className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 p-3 rounded-full text-white hover:bg-white/20 transition-colors hidden md:block z-[110]" onClick={prevImage}>
+            <ChevronDown className="rotate-90" size={32} />
+          </button>
+
+          <button className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 p-3 rounded-full text-white hover:bg-white/20 transition-colors hidden md:block z-[110]" onClick={nextImage}>
+            <ChevronDown className="-rotate-90" size={32} />
+          </button>
+
+          <img
+            src={galleryPhotos[currentImageIndex]}
+            alt="Gallery Fullscreen"
+            className="max-w-full max-h-[90vh] object-contain shadow-2xl rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80' }}
+          />
+
+          <p className="absolute bottom-6 text-white/50 text-sm font-medium">
+            {currentImageIndex + 1} / {galleryPhotos.length}
+          </p>
+        </div>
+      )}
+
     </div>
   );
 }
