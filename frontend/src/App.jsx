@@ -505,7 +505,7 @@ function ClientView({ products, categories, cart, onProductClick, removeFromCart
         </div>
       </div>
       <div className="lg:col-span-1">
-        <div className="glass-panel p-6 rounded-3xl mb-8">
+        <div className="glass-panel p-6 rounded-3xl mb-8 hidden lg:block">
           <div className="flex items-center justify-between mb-6 border-b border-white/70 pb-4"><h2 className="text-xl font-extrabold flex items-center gap-2 text-slate-900"><ShoppingBag className="text-rose-500" /> Solicitud</h2><span className="bg-rose-500/10 text-rose-600 text-xs font-bold px-3 py-1 rounded-full border border-rose-200 shadow-sm">{cart.length} items</span></div>
           <div className="bg-white/70 p-4 rounded-2xl mb-6 max-h-[400px] overflow-y-auto custom-scrollbar border border-white/80 shadow-inner">
             {cart.length === 0 ? (<div className="text-center py-8"><div className="bg-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner border border-slate-100"><ShoppingBag className="text-slate-300" size={32} /></div><p className="text-slate-400 text-sm font-medium mb-3">Tu lista está vacía</p><button onClick={openBot} className="text-xs bg-slate-900 text-white px-3 py-2 rounded-full font-bold hover:-translate-y-0.5 transition-transform shadow-lg shadow-rose-100 flex items-center gap-1 mx-auto"><Sparkles size={14} /> Pedir ayuda a Lunita</button></div>) : (
