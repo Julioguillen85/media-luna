@@ -368,29 +368,49 @@ export const validators = {
     },
 
     time: (text) => {
-        let hour = null;
+        const lower = text.toLowerCase().trim();
+        let hour = 0;
+        let minute = 0;
+        let found = false;
 
-        const time12h = text.match(/(\d{1,2})(?::00)?\s*(pm|p\.m\.|de la tarde)/i);
-        if (time12h) {
-            hour = parseInt(time12h[1]);
-            if (hour < 12) hour += 12;
+        // 1. Explicit AM/PM format (e.g. "6:30 pm", "6pm", "6:30 de la tarde")
+        const matchAMPM = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(pm|p\.m\.|am|a\.m\.|de la tarde|de la mañana)/);
+        if (matchAMPM) {
+            hour = parseInt(matchAMPM[1]);
+            minute = matchAMPM[2] ? parseInt(matchAMPM[2]) : 0;
+            const isPM = /pm|p\.m\.|tarde/.test(matchAMPM[3]);
+
+            if (isPM && hour < 12) hour += 12;
+            if (!isPM && hour === 12) hour = 0;
+            found = true;
         }
 
-        const time24h = text.match(/^(\d{1,2})(?::00)?$/);
-        if (time24h) {
-            hour = parseInt(time24h[1]);
-        }
+        // 2. 24H format or loose "H:MM" (e.g. "18:30", "6:30")
+        if (!found) {
+            const matchTime = lower.match(/(?:a\s+)?(?:las\s+)?(\d{1,2})(?::(\d{2}))?/);
+            if (matchTime) {
+                hour = parseInt(matchTime[1]);
+                minute = matchTime[2] ? parseInt(matchTime[2]) : 0;
 
-        const timeEs = text.match(/(?:a\s+)?las?\s+(\d{1,2})/i);
-        if (timeEs) {
-            hour = parseInt(timeEs[1]);
-            if (hour >= 2 && hour <= 8) {
-                hour += 12;
+                // Heuristic: If hour is 1-11, assume PM context (since store opens 2pm)
+                // Exception: if hour is 0-11 but clearly meant as AM (unlikely given store hours)
+                // We map 1-11 to 13-23.
+                if (hour >= 1 && hour <= 11) {
+                    hour += 12;
+                }
+                found = true;
             }
         }
 
-        if (hour && hour >= 14 && hour <= 20) {
-            return `${hour.toString().padStart(2, '0')}:00`;
+        if (found) {
+            // Validation: 14:00 (2 PM) to 20:00 (8 PM)
+            const totalMinutes = hour * 60 + minute;
+            const startMinutes = 14 * 60;
+            const endMinutes = 20 * 60;
+
+            if (totalMinutes >= startMinutes && totalMinutes <= endMinutes) {
+                return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            }
         }
 
         return null;
