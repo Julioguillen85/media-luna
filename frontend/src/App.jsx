@@ -116,6 +116,65 @@ export default function App() {
 
   const handleDeleteProduct = async (id) => { if (!DEMO_MODE && confirm("Borrar?")) await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' }); window.location.reload(); };
 
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    if (DEMO_MODE) {
+      setOrders(orders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+    } else {
+      try {
+        await fetch(`${API_URL}/orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        setOrders(orders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+      } catch (err) {
+        console.error('Error updating order status:', err);
+        alert('Error al actualizar el estado');
+      }
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!confirm('¿Eliminar este pedido?')) return;
+    if (DEMO_MODE) {
+      setOrders(orders.filter(o => o.id !== orderId));
+    } else {
+      try {
+        await fetch(`${API_URL}/orders/${orderId}`, { method: 'DELETE' });
+        setOrders(orders.filter(o => o.id !== orderId));
+      } catch (err) {
+        console.error('Error deleting order:', err);
+        alert('Error al eliminar el pedido');
+      }
+    }
+  };
+
+  const handleSaveOptions = async (newOptions) => {
+    if (DEMO_MODE) {
+      setOptions(newOptions);
+      alert('Opciones guardadas (modo demo)');
+    } else {
+      try {
+        await fetch(`${API_URL}/options`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOptions)
+        });
+        setOptions(newOptions);
+        alert('Opciones guardadas correctamente');
+      } catch (err) {
+        console.error('Error saving options:', err);
+        alert('Error al guardar opciones');
+      }
+    }
+  };
+
+  const handleSaveInventory = (inventory) => {
+    console.log('Saving inventory:', inventory);
+    alert('Inventario guardado (funcionalidad en desarrollo)');
+    // TODO: Implement backend endpoint for inventory
+  };
+
   const handleAutoFillCheckout = (data) => {
     setCheckoutFormData(data);
     setIsBotOpen(false);
@@ -225,8 +284,16 @@ ${itemsText}
 
         {view === 'admin' && isAdmin && (
           <AdminDashboard
-            products={products} categories={categories} orders={orders}
-            onSaveProduct={handleSaveProduct} onDeleteProduct={handleDeleteProduct}
+            products={products}
+            categories={categories}
+            orders={orders}
+            options={options}
+            onSaveProduct={handleSaveProduct}
+            onDeleteProduct={handleDeleteProduct}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+            onDeleteOrder={handleDeleteOrder}
+            onSaveOptions={handleSaveOptions}
+            onSaveInventory={handleSaveInventory}
           />
         )}
       </main>
