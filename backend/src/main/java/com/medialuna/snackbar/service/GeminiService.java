@@ -28,61 +28,91 @@ public class GeminiService {
     /**
      * Construye el system prompt con el contexto del negocio
      */
+    /**
+     * Construye el system prompt con el contexto del negocio
+     */
     public String buildSystemPrompt(Map<String, Object> businessContext) {
         StringBuilder prompt = new StringBuilder();
 
-        prompt.append("Eres Lunita IA, asistente virtual de Media Luna Snack Bar en Manzanillo, Colima, México.\n\n");
+        prompt.append(
+                "Eres Lunita IA, la experta anfitriona de Media Luna Snack Bar en Manzanillo. Tu misión es vender y antojar.\n\n");
 
         prompt.append("PERSONALIDAD:\n");
-        prompt.append("- Amigable, casual, usa lenguaje mexicano informal\n");
-        prompt.append("- Emojis moderados (🌙🍉😊)\n");
-        prompt.append("- Respuestas cortas y directas\n");
-        prompt.append("- Muy entusiasta sobre los productos\n\n");
+        prompt.append("- SIEMPRE responde en español mexicanísimo (¡nunca inglés!).\n");
+        prompt.append("- Muy amigable, usa emojis (🌙🍿🥤).\n");
+        prompt.append("- Experta en eventos y snacks.\n");
+        prompt.append("- Proactiva: Si piden una mesa, preguntas para cuántos.\n\n");
 
-        prompt.append("NEGOCIO:\n");
-        prompt.append("- Especialidad: Snacks preparados (Papas, Tostilocos, Elotes, Duros, etc.)\n");
-        prompt.append("- Bebidas: Micheladas y Cantaritos\n");
-        prompt.append("- Horario: 2 PM a 8 PM\n");
-        prompt.append("- Ubicación: Solo Manzanillo, Colima\n");
-        prompt.append("- Servicio: Cotización para eventos (bodas, fiestas, cumpleaños)\n\n");
-
-        prompt.append("PRODUCTOS DISPONIBLES:\n");
+        prompt.append("PRODUCTOS IMPRESCINDIBLES (Usa estos nombres EXACTOS):\n");
         if (businessContext != null && businessContext.containsKey("products")) {
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> products = (List<Map<String, Object>>) businessContext.get("products");
             for (Map<String, Object> product : products) {
-                prompt.append(String.format("- %s: %s\n",
+                // Skip invisible products
+                Object visibleObj = product.get("visible");
+                if (visibleObj != null && Boolean.FALSE.equals(visibleObj)) {
+                    continue;
+                }
+                StringBuilder prodLine = new StringBuilder();
+                prodLine.append(String.format("- %s (%s): %s\n",
                         product.get("name"),
+                        product.get("category"),
                         product.get("desc")));
+
+                // Add full tier info if available (compressed format)
+                if (product.containsKey("priceTiers") && product.get("priceTiers") != null) {
+                    @SuppressWarnings("unchecked")
+                    List<Map<String, Object>> tiers = (List<Map<String, Object>>) product
+                            .get("priceTiers");
+                    if (!tiers.isEmpty()) {
+                        // Remove trailing newline to append tiers on same line
+                        prodLine.setLength(prodLine.length() - 1);
+                        prodLine.append(" (Mayoreo: ");
+                        for (int i = 0; i < tiers.size(); i++) {
+                            Map<String, Object> t = tiers.get(i);
+                            // Format integer values to drop decimal ".0" if present in price
+                            Double priceD = Double.valueOf(t.get("price").toString());
+                            String priceStr = (priceD % 1 == 0) ? String.format("%.0f", priceD) : priceD.toString();
+                            prodLine.append(t.get("minGuests")).append("p:$").append(priceStr);
+                            if (i < tiers.size() - 1)
+                                prodLine.append(", ");
+                        }
+                        prodLine.append(")\n");
+                    }
+                }
+                prompt.append(prodLine);
             }
-        } else {
-            prompt.append("- Papas Preparadas (Bowl): Personalizables (tamaño, base, complementos, toppings)\n");
-            prompt.append("- Tostilocos: Tostitos con cueritos, jícama, pepino\n");
-            prompt.append("- Maruchan Preparada: Sopa instantánea con elote y queso\n");
-            prompt.append("- Elote en Vaso: Esquite con mayonesa, queso y chile\n");
-            prompt.append("- Duros Preparados: Chicharrón de harina con verdura\n");
-            prompt.append("- Crepaletas, Fresas con Crema, Mini Hotcakes, Paletas de Hielo\n");
-            prompt.append("- Micheladas y Cantaritos\n");
         }
-        prompt.append("\n");
 
-        prompt.append("REGLAS IMPORTANTES:\n");
-        prompt.append("1. Si el usuario pregunta por un producto, describe brevemente y pregunta si lo quiere\n");
-        prompt.append("2. Para 'Papas Preparadas (Bowl)', menciona que se personalizan completamente\n");
-        prompt.append("3. NO inventes productos que no están en la lista\n");
-        prompt.append("4. NO des precios específicos, di 'depende de la personalización'\n");
-        prompt.append("5. Si el usuario quiere finalizar pedido, dile que puede usar el botón 'Finalizar mi pedido'\n");
-        prompt.append("6. NO uses formato JSON en tus respuestas, solo texto natural\n");
-        prompt.append("7. Sé breve: máximo 2-3 oraciones por respuesta\n\n");
-
-        prompt.append("ACCIONES QUE EL USUARIO PUEDE HACER:\n");
-        prompt.append("- Agregar productos al carrito (tú solo recomiendas, el sistema lo agrega)\n");
-        prompt.append("- Ver el menú completo\n");
-        prompt.append("- Personalizar bowls (se hace en la interfaz)\n");
-        prompt.append("- Finalizar pedido con el botón cuando esté listo\n\n");
-
+        prompt.append("\nREGLAS DE ORO (Síguelas o perderás la venta):\n");
         prompt.append(
-                "Responde siempre en español mexicano casual. ¡Sé amigable y ayuda al cliente a descubrir qué se le antoja!");
+                "1. **AMBIGÜEDAD ES PROHIBIDA**: Si el usuario dice 'quiero snacks', TÚ DICES: '¡Qué rico! Tengo papas preparadas, Tostilocos, elotes... ¿cuál se te antoja más?'.\n");
+        prompt.append(
+                "2. **VENTA DE RENTAS**: Si piden 'mesas' o 'tablones', TÚ DICES: '¿Para cuántas personas es tu evento?'.\n");
+        prompt.append(
+                "   - Si dicen '20 personas', VENDE: 'Te recomiendo 2 Paquetes (Redonda o Tablón)'.\n");
+        prompt.append(
+                "   - Si piden 'Tablón', véndeles 'Tablón' o 'Tablón (Paquete)'.\n");
+        prompt.append(
+                "3. **AGREGAR/MODIFICAR CARRITO**: Cuando el usuario confirme qué quiere, DEBES mantener la cuenta TOTAL mentalmente y enviar el comando con el TOTAL FINAL:\n");
+        prompt.append("   ||SET_QTY:total:Nombre Exacto Del Producto||\n");
+        prompt.append("   Ejemplo: Si pide 2 Tostilocos -> ||SET_QTY:2:Tostilocos||\n");
+        prompt.append("   Ejemplo: Si luego dice 'uno más' (Total 3) -> ||SET_QTY:3:Tostilocos||\n");
+        prompt.append("   Ejemplo renta: '2 mesas' -> ||SET_QTY:2:Mesa Redonda||\n");
+        prompt.append("   ⛔ **REGLA DE ORO**: \n");
+        prompt.append("   - Tu comando ||SET_QTY|| DEFINE LA CANTIDAD FINAL EN EL CARRITO. \n");
+        prompt.append(
+                "   - NO es una suma. Si envías ||SET_QTY:1...||, el carrito se pondrá en 1 (borrando los anteriores). \n");
+        prompt.append("   - SIEMPRE calcula: (Lo que ya tenía) + (Lo nuevo) = (TOTAL A ENVIAR).\n");
+        prompt.append("4. **NO INVENTES**: Solo vende lo que está en la lista.\n");
+        prompt.append(
+                "5. **BOWL DE PAPAS**: Si piden 'papas' o 'bowl', solo di '¡Excelente elección! Vamos a prepararlas a tu gusto'. (El sistema abrirá el personalizador, NO uses ||ADD|| para papas aquí).\n");
+        prompt.append(
+                "6. **COTIZACIÓN BOWL DE PAPAS**: SI ES COTIZACIÓN DE BOWL DE PAPAS PARA EVENTO, DEBES preguntar textualmente: 'Manejamos dos precios y depende del tamaño del bowl. ¿De qué tamaño te gustaría 1/4 o 1/2?'. NO DEBES DAR EL PRECIO AÚN. Cuando te respondan el tamaño, dales la cotización exacta usando el Mayoreo. (Para Bowl 1/2 usa el mayoreo asociado al producto. Para Bowl 1/4 usa estrictamente estos precios: 30p:$1950, 40p:$2600, 50p:$3250, 60p:$3600, 70p:$4200, 80p:$4800, 90p:$5400, 100p:$5500, 150p:$8250, 200p:$11000). En ese mismo mensaje diles que no se arrepentirán y pregunta: '¿Te interesa? ¿Deseas agregarlo al carrito y personalizarlo a tu gusto, o cotizamos otro producto?'. ¡IMPORTANTE! NUNCA envíes el comando ||SET_QTY|| durante la cotización, ESPERA hasta que el cliente responda afirmativamente ('sí me interesa', 'agrégalo').\n");
+
+        prompt.append("\nFORMATO DE RESPUESTA:\n");
+        prompt.append("- Texto natural y vendedor primero.\n");
+        prompt.append("- Comando ||SET_QTY...|| al final si aplica.\n");
 
         return prompt.toString();
     }
@@ -157,6 +187,11 @@ public class GeminiService {
         if (lowerUser.contains("menú") || lowerUser.contains("menu") ||
                 lowerUser.contains("todo") || lowerUser.contains("opciones")) {
             return "show_menu";
+        }
+
+        // Detectar pregunta de tamaño de bowl para cotización
+        if (lowerResponse.contains("manejamos dos precios") && lowerResponse.contains("tamaño")) {
+            return "ask_bowl_size_quote";
         }
 
         // Detectar menciones de productos para agregar

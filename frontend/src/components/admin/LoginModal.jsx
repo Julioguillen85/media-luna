@@ -31,7 +31,7 @@ export default function LoginModal({ onClose, onLogin }) {
                             placeholder="Usuario"
                             value={username}
                             onChange={e => setUsername(e.target.value)}
-                            className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition"
+                            className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition text-slate-900"
                             autoFocus
                         />
                     </div>
@@ -42,7 +42,7 @@ export default function LoginModal({ onClose, onLogin }) {
                             placeholder="Contraseña"
                             value={password}
                             onChange={e => setPassword(e.target.value)}
-                            className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition"
+                            className="w-full pl-10 p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition text-slate-900"
                         />
                     </div>
                     <button type="submit" className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg hover:bg-slate-800 transition transform hover:-translate-y-0.5">

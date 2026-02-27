@@ -3,29 +3,29 @@ import { User, Sparkles } from 'lucide-react';
 import Markdown from 'react-markdown';
 
 export default function ChatMessage({ msg }) {
-    const isUser = msg.sender === 'user';
+    const isUser = msg.role === 'user';
 
     return (
         <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
             <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${isUser
-                        ? 'bg-gradient-to-br from-slate-100 to-white border-slate-200'
-                        : 'bg-gradient-to-br from-rose-100 to-amber-100 border-rose-200'
+                    ? 'bg-gradient-to-br from-slate-100 to-white dark:from-slate-700 dark:to-slate-800 border-slate-200 dark:border-slate-600'
+                    : 'bg-gradient-to-br from-rose-100 to-amber-100 dark:from-rose-900/50 dark:to-amber-900/50 border-rose-200 dark:border-rose-800'
                     }`}
             >
-                {isUser ? <User size={14} className="text-slate-600" /> : <span className="text-lg" role="img" aria-label="lunita">🍉</span>}
+                {isUser ? <User size={14} className="text-slate-600 dark:text-slate-300" /> : <span className="text-lg" role="img" aria-label="lunita">🍉</span>}
             </div>
 
             <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
                 <div
                     className={`px-4 py-2.5 rounded-2xl text-sm shadow-sm leading-relaxed relative ${isUser
-                            ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white rounded-tr-sm'
-                            : 'bg-white border border-slate-100 text-slate-700 rounded-tl-sm'
+                        ? 'bg-gradient-to-r from-slate-800 to-slate-900 dark:from-indigo-600 dark:to-purple-700 text-white rounded-tr-sm'
+                        : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-tl-sm'
                         }`}
                 >
                     {/* Markdown Rendering for Bot Messages */}
                     {!isUser ? (
-                        <div className="prose prose-sm prose-p:my-1 prose-a:text-rose-600 prose-strong:text-slate-900 max-w-none">
+                        <div className="prose prose-sm prose-p:my-1 prose-a:text-rose-600 dark:prose-a:text-rose-400 prose-strong:text-slate-900 dark:prose-strong:text-white max-w-none dark:text-slate-200">
                             <Markdown>{msg.text}</Markdown>
                         </div>
                     ) : (
