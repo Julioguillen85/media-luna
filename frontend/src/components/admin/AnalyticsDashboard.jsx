@@ -126,11 +126,11 @@ export default function AnalyticsDashboard({ orders, products }) {
         <div className="space-y-6">
             {/* Selector de Periodo */}
             <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">Dashboard de Analíticas</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white transition-colors duration-300">Dashboard de Analíticas</h3>
                 <select
                     value={period}
                     onChange={(e) => setPeriod(e.target.value)}
-                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                    className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-colors duration-300"
                 >
                     <option value="day">Hoy</option>
                     <option value="week">Esta Semana</option>
@@ -140,68 +140,69 @@ export default function AnalyticsDashboard({ orders, products }) {
 
             {/* Cards de Estadísticas */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6 rounded-2xl">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 border border-blue-200 dark:border-blue-800/50 p-6 rounded-2xl transition-colors duration-300">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center transition-colors duration-300">
                             <Package size={20} />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-blue-900">{analytics.totalOrders}</p>
-                            <p className="text-xs font-bold text-blue-600 uppercase tracking-wide">Pedidos</p>
+                            <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 transition-colors duration-300">{analytics.totalOrders}</p>
+                            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide transition-colors duration-300">Pedidos</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-6 rounded-2xl">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/10 border border-green-200 dark:border-green-800/50 p-6 rounded-2xl transition-colors duration-300">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-green-500 text-white rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-green-500 text-white rounded-xl flex items-center justify-center transition-colors duration-300">
                             <DollarSign size={20} />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-green-900">${analytics.estimatedRevenue.toFixed(0)}</p>
-                            <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Ingresos Est.</p>
+                            <p className="text-2xl font-bold text-green-900 dark:text-green-100 transition-colors duration-300">${analytics.estimatedRevenue.toFixed(0)}</p>
+                            <p className="text-xs font-bold text-green-600 dark:text-green-400 uppercase tracking-wide transition-colors duration-300">Ingresos Est.</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 p-6 rounded-2xl">
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/10 border border-purple-200 dark:border-purple-800/50 p-6 rounded-2xl transition-colors duration-300">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-purple-500 text-white rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-purple-500 text-white rounded-xl flex items-center justify-center transition-colors duration-300">
                             <Award size={20} />
                         </div>
                         <div>
-                            <p className="text-lg font-bold text-purple-900 truncate">{analytics.topProduct}</p>
-                            <p className="text-xs font-bold text-purple-600 uppercase tracking-wide">Top Producto</p>
+                            <p className="text-lg font-bold text-purple-900 dark:text-purple-100 truncate transition-colors duration-300">{analytics.topProduct}</p>
+                            <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide transition-colors duration-300">Top Producto</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-rose-50 to-rose-100 border border-rose-200 p-6 rounded-2xl">
+                <div className="bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/20 dark:to-rose-900/10 border border-rose-200 dark:border-rose-800/50 p-6 rounded-2xl transition-colors duration-300">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center transition-colors duration-300">
                             <TrendingUp size={20} />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-rose-900">{analytics.conversionRate}%</p>
-                            <p className="text-xs font-bold text-rose-600 uppercase tracking-wide">Tasa Éxito</p>
+                            <p className="text-2xl font-bold text-rose-900 dark:text-rose-100 transition-colors duration-300">{analytics.conversionRate}%</p>
+                            <p className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide transition-colors duration-300">Tasa Éxito</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Gráfico de Pedidos en el Tiempo */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                <h4 className="text-lg font-bold text-slate-800 mb-4">Pedidos en el Tiempo</h4>
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
+                <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-4 transition-colors duration-300">Pedidos en el Tiempo</h4>
                 {analytics.ordersOverTime.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={analytics.ordersOverTime}>
-                            <XAxis dataKey="date" stroke="#64748b" style={{ fontSize: '12px' }} />
-                            <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                            <XAxis dataKey="date" stroke="#64748b" style={{ fontSize: '12px' }} className="dark:text-slate-400" />
+                            <YAxis stroke="#64748b" style={{ fontSize: '12px' }} className="dark:text-slate-400" />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: '#fff',
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '8px',
+                                    backgroundColor: 'var(--tw-colors-slate-800, #1e293b)',
+                                    borderColor: 'var(--tw-colors-slate-700, #334155)',
+                                    borderRadius: '0.5rem',
+                                    color: '#f8fafc',
                                     fontSize: '12px'
                                 }}
                             />
@@ -210,13 +211,13 @@ export default function AnalyticsDashboard({ orders, products }) {
                                 dataKey="pedidos"
                                 stroke="#e11d48"
                                 strokeWidth={3}
-                                dot={{ fill: '#e11d48', r: 5 }}
+                                dot={{ fill: '#e11d48', outline: 'none', stroke: 'none', r: 5 }}
                                 activeDot={{ r: 7 }}
                             />
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
-                    <div className="text-center py-12 text-slate-400">
+                    <div className="text-center py-12 text-slate-400 dark:text-slate-500 transition-colors duration-300">
                         No hay datos de pedidos en este periodo
                     </div>
                 )}
@@ -225,34 +226,36 @@ export default function AnalyticsDashboard({ orders, products }) {
             {/* Grid de Gráficos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Top Productos */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h4 className="text-lg font-bold text-slate-800 mb-4">Top 5 Productos Más Solicitados</h4>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
+                    <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-4 transition-colors duration-300">Top 5 Productos Más Solicitados</h4>
                     {analytics.topProducts.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={analytics.topProducts} layout="vertical">
-                                <XAxis type="number" stroke="#64748b" style={{ fontSize: '12px' }} />
-                                <YAxis type="category" dataKey="name" width={120} stroke="#64748b" style={{ fontSize: '12px' }} />
+                                <XAxis type="number" stroke="#64748b" style={{ fontSize: '12px' }} className="dark:text-slate-400" />
+                                <YAxis type="category" dataKey="name" width={120} stroke="#64748b" style={{ fontSize: '12px' }} className="dark:text-slate-400" />
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
+                                        backgroundColor: 'var(--tw-colors-slate-800, #1e293b)',
+                                        borderColor: 'var(--tw-colors-slate-700, #334155)',
+                                        borderRadius: '0.5rem',
+                                        color: '#f8fafc',
                                         fontSize: '12px'
                                     }}
+                                    cursor={{ fill: 'var(--tw-colors-slate-100, #f1f5f9)', opacity: 0.1 }}
                                 />
                                 <Bar dataKey="count" fill="#e11d48" radius={[0, 8, 8, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="text-center py-12 text-slate-400">
+                        <div className="text-center py-12 text-slate-400 dark:text-slate-500 transition-colors duration-300">
                             No hay productos solicitados
                         </div>
                     )}
                 </div>
 
                 {/* Distribución de Estados */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h4 className="text-lg font-bold text-slate-800 mb-4">Distribución de Estados</h4>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
+                    <h4 className="text-lg font-bold text-slate-800 dark:text-white mb-4 transition-colors duration-300">Distribución de Estados</h4>
                     {analytics.statusDistribution.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
@@ -265,6 +268,7 @@ export default function AnalyticsDashboard({ orders, products }) {
                                     outerRadius={80}
                                     fill="#8884d8"
                                     dataKey="value"
+                                    stroke="none"
                                 >
                                     {analytics.statusDistribution.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -272,16 +276,17 @@ export default function AnalyticsDashboard({ orders, products }) {
                                 </Pie>
                                 <Tooltip
                                     contentStyle={{
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #e2e8f0',
-                                        borderRadius: '8px',
+                                        backgroundColor: 'var(--tw-colors-slate-800, #1e293b)',
+                                        borderColor: 'var(--tw-colors-slate-700, #334155)',
+                                        borderRadius: '0.5rem',
+                                        color: '#f8fafc',
                                         fontSize: '12px'
                                     }}
                                 />
                             </PieChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="text-center py-12 text-slate-400">
+                        <div className="text-center py-12 text-slate-400 dark:text-slate-500 transition-colors duration-300">
                             No hay pedidos para mostrar
                         </div>
                     )}

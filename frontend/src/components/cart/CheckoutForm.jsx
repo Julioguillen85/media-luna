@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Phone, MapPin, Users, FileText } from 'lucide-react';
 
-export default function CheckoutForm({ onCheckout, hasItems, formData, setFormData }) {
+export default function CheckoutForm({ onCheckout, hasItems, formData, setFormData, isFurnitureOnly }) {
     const handleSubmit = (e) => { e.preventDefault(); if (!hasItems) return; onCheckout(formData); };
 
     return (
@@ -14,8 +14,8 @@ export default function CheckoutForm({ onCheckout, hasItems, formData, setFormDa
                 <input required type="date" className="w-full p-3 bg-white/70 border border-white/80 rounded-xl focus:ring-2 focus:ring-rose-300 outline-none text-sm text-slate-600 shadow-inner" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
                 <input required type="time" min="14:00" max="20:00" className="w-full p-3 bg-white/70 border border-white/80 rounded-xl focus:ring-2 focus:ring-rose-300 outline-none text-sm text-slate-600 shadow-inner" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
             </div>
-            <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 shadow-lg shadow-rose-100/40"><label className="text-sm font-bold block mb-1 flex items-center gap-1 text-white"><Users size={16} /> Número de Personas</label><input required type="number" min="1" placeholder="Ej: 30 personas" className="w-full p-2 bg-white text-slate-900 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-300 transition-all text-sm" value={formData.peopleCount} onChange={e => setFormData({ ...formData, peopleCount: e.target.value })} /></div>
-            <button type="submit" disabled={!hasItems} className={`w-full py-4 rounded-xl font-bold text-white flex justify-center items-center gap-2 shadow-lg transition-all active:scale-[0.98] ${hasItems ? 'bg-gradient-to-r from-slate-900 via-rose-600 to-amber-500 hover:shadow-rose-300/60 hover:-translate-y-1' : 'bg-gray-300 cursor-not-allowed'}`}><FileText size={20} /> Solicitar Cotización</button>
+            <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 shadow-lg shadow-rose-100/40"><label className="text-sm font-bold block mb-1 flex items-center gap-1 text-white"><Users size={16} /> Duración de Servicio</label><p className="w-full p-2 bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-sm text-center font-medium">2 horas</p></div>
+            <button type="submit" disabled={!hasItems} className={`w-full py-4 rounded-xl font-bold text-white flex justify-center items-center gap-2 shadow-lg transition-all active:scale-[0.98] ${hasItems ? 'bg-gradient-to-r from-slate-900 via-rose-600 to-amber-500 hover:shadow-rose-300/60 hover:-translate-y-1' : 'bg-gray-300 cursor-not-allowed'}`}><FileText size={20} /> Consultar Disponibilidad</button>
         </form>
     );
 }

@@ -10,6 +10,15 @@
   --card: rgba(255, 255, 255, 0.82);
 }
 
+.dark {
+  --accent: #fb7185;
+  /* rose-400 */
+  --accent-2: #fbbf24;
+  /* amber-400 */
+  --card: rgba(30, 41, 59, 0.7);
+  /* slate-800 with opacity */
+}
+
 * {
   scroll-behavior: smooth;
 }
@@ -22,6 +31,21 @@ body {
     radial-gradient(circle at 50% 90%, rgba(204, 238, 255, 0.9) 0, rgba(204, 238, 255, 0) 28%),
     #fff8f5;
   color: #0f172a;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(76, 29, 149, 0.15) 0, rgba(76, 29, 149, 0) 32%),
+    /* deep purple */
+    radial-gradient(circle at 85% 15%, rgba(49, 46, 129, 0.2) 0, rgba(49, 46, 129, 0) 30%),
+    /* deep indigo */
+    radial-gradient(circle at 50% 90%, rgba(136, 19, 55, 0.15) 0, rgba(136, 19, 55, 0) 28%),
+    /* deep rose */
+    #0f172a;
+  /* slate-900 base */
+  color: #f8fafc;
+  /* slate-50 */
 }
 
 ::selection {
@@ -29,9 +53,20 @@ body {
   color: #b91c1c;
 }
 
+.dark ::selection {
+  background: rgba(251, 113, 133, 0.25);
+  /* rose-400 */
+  color: #ffe4e6;
+}
+
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .animate-marquee {
@@ -80,6 +115,10 @@ body {
   background: #f1f1f1;
 }
 
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #ffa2c0, #ff7a7a);
   border-radius: 10px;
@@ -90,4 +129,10 @@ body {
   backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dark .glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.4);
 }

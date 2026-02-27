@@ -25,3 +25,6 @@ yarn-debug.log*
 yarn-error.log*
 logs/
 *.log
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.agent/rules/snyk_rules.md
