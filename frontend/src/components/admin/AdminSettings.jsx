@@ -84,82 +84,82 @@ export default function AdminSettings({ products, orders }) {
     return (
         <div className="space-y-8">
             {/* Configuración de Columnas Visibles */}
-            <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center transition-colors duration-300">
                         <Eye size={20} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900">Columnas Visibles</h3>
-                        <p className="text-sm text-slate-500">Personaliza qué columnas mostrar en la tabla de productos</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-300">Columnas Visibles</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors duration-300">Personaliza qué columnas mostrar en la tabla de productos</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                    <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                    <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-300">
                         <input
                             type="checkbox"
                             checked={settings.showImage}
                             onChange={() => toggleSetting('showImage')}
-                            className="w-5 h-5 text-rose-600 rounded focus:ring-2 focus:ring-rose-300"
+                            className="w-5 h-5 text-rose-600 dark:text-rose-500 rounded focus:ring-2 focus:ring-rose-300 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 transition-colors duration-300"
                         />
-                        <span className="font-medium text-slate-700">Mostrar Imagen</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300 transition-colors duration-300">Mostrar Imagen</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                    <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-300">
                         <input
                             type="checkbox"
                             checked={settings.showCategory}
                             onChange={() => toggleSetting('showCategory')}
-                            className="w-5 h-5 text-rose-600 rounded focus:ring-2 focus:ring-rose-300"
+                            className="w-5 h-5 text-rose-600 dark:text-rose-500 rounded focus:ring-2 focus:ring-rose-300 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 transition-colors duration-300"
                         />
-                        <span className="font-medium text-slate-700">Mostrar Categoría</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300 transition-colors duration-300">Mostrar Categoría</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                    <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-300">
                         <input
                             type="checkbox"
                             checked={settings.showPrice}
                             onChange={() => toggleSetting('showPrice')}
-                            className="w-5 h-5 text-rose-600 rounded focus:ring-2 focus:ring-rose-300"
+                            className="w-5 h-5 text-rose-600 dark:text-rose-500 rounded focus:ring-2 focus:ring-rose-300 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 transition-colors duration-300"
                         />
-                        <span className="font-medium text-slate-700">Mostrar Precio</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300 transition-colors duration-300">Mostrar Precio</span>
                     </label>
 
-                    <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                    <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-300">
                         <input
                             type="checkbox"
                             checked={settings.showActions}
                             onChange={() => toggleSetting('showActions')}
-                            className="w-5 h-5 text-rose-600 rounded focus:ring-2 focus:ring-rose-300"
+                            className="w-5 h-5 text-rose-600 dark:text-rose-500 rounded focus:ring-2 focus:ring-rose-300 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 transition-colors duration-300"
                         />
-                        <span className="font-medium text-slate-700">Mostrar Acciones</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300 transition-colors duration-300">Mostrar Acciones</span>
                     </label>
                 </div>
 
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-700">
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg transition-colors duration-300">
+                    <p className="text-xs text-blue-700 dark:text-blue-400 transition-colors duration-300">
                         💡 Tus preferencias se guardan automáticamente en tu navegador
                     </p>
                 </div>
             </section>
 
             {/* Exportación de Datos */}
-            <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center transition-colors duration-300">
                         <Download size={20} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900">Exportar Datos</h3>
-                        <p className="text-sm text-slate-500">Descarga tus datos en formato CSV para análisis externo</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-300">Exportar Datos</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors duration-300">Descarga tus datos en formato CSV para análisis externo</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     <button
                         onClick={handleExportProducts}
-                        className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg shadow-blue-200 hover:shadow-xl"
+                        className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white rounded-xl font-bold hover:from-blue-600 hover:to-blue-700 dark:hover:from-blue-500 dark:hover:to-blue-600 transition-all shadow-lg shadow-blue-200 dark:shadow-blue-900/20 hover:shadow-xl"
                     >
                         <Download size={20} />
                         Exportar Productos
@@ -167,48 +167,48 @@ export default function AdminSettings({ products, orders }) {
 
                     <button
                         onClick={handleExportOrders}
-                        className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-bold hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg shadow-purple-200 hover:shadow-xl"
+                        className="flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white rounded-xl font-bold hover:from-purple-600 hover:to-purple-700 dark:hover:from-purple-500 dark:hover:to-purple-600 transition-all shadow-lg shadow-purple-200 dark:shadow-purple-900/20 hover:shadow-xl"
                     >
                         <Download size={20} />
                         Exportar Pedidos
                     </button>
                 </div>
 
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-xs text-amber-700">
+                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg transition-colors duration-300">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 transition-colors duration-300">
                         📊 Los archivos CSV se pueden abrir en Excel, Google Sheets o cualquier software de hojas de cálculo
                     </p>
                 </div>
             </section>
 
             {/* Información del Sistema */}
-            <section className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <section className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
                 <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 rounded-xl flex items-center justify-center transition-colors duration-300">
                         <SettingsIcon size={20} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900">Información del Sistema</h3>
-                        <p className="text-sm text-slate-500">Detalles de la aplicación</p>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-300">Información del Sistema</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors duration-300">Detalles de la aplicación</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                        <p className="text-xs text-slate-500 mb-1">Versión</p>
-                        <p className="text-lg font-bold text-slate-900">1.0.0</p>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl transition-colors duration-300">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors duration-300">Versión</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-300">1.0.0</p>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                        <p className="text-xs text-slate-500 mb-1">Productos</p>
-                        <p className="text-lg font-bold text-slate-900">{products?.length || 0}</p>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl transition-colors duration-300">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors duration-300">Productos</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-300">{products?.length || 0}</p>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                        <p className="text-xs text-slate-500 mb-1">Pedidos</p>
-                        <p className="text-lg font-bold text-slate-900">{orders?.length || 0}</p>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl transition-colors duration-300">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors duration-300">Pedidos</p>
+                        <p className="text-lg font-bold text-slate-900 dark:text-white transition-colors duration-300">{orders?.length || 0}</p>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-xl">
-                        <p className="text-xs text-slate-500 mb-1">Estado</p>
-                        <p className="text-lg font-bold text-green-600">Activo</p>
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl transition-colors duration-300">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors duration-300">Estado</p>
+                        <p className="text-lg font-bold text-green-600 dark:text-green-400 transition-colors duration-300">Activo</p>
                     </div>
                 </div>
             </section>

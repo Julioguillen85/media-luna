@@ -51,4 +51,37 @@ public class WhatsAppService {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Send a weekly sales report via WhatsApp to the business owner
+     */
+    public void sendWeeklyReport(String reportText, String phoneNumber) {
+        if (apiToken == null || apiToken.contains("PON_AQUI") || apiToken.equals("DISABLED")) {
+            System.out.println("⚠️ WhatsApp API no configurada — reporte no enviado.");
+            System.out.println("📊 Reporte que se habría enviado:\n" + reportText);
+            return;
+        }
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = apiUrl + "/" + phoneId + "/messages";
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("messaging_product", "whatsapp");
+            payload.put("to", "52" + phoneNumber);
+            payload.put("type", "text");
+            Map<String, String> text = new HashMap<>();
+            text.put("body", reportText);
+            payload.put("text", text);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiToken);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            restTemplate.postForEntity(url, entity, String.class);
+            System.out.println("✅ Reporte semanal enviado por WhatsApp a " + phoneNumber);
+        } catch (Exception e) {
+            System.err.println("❌ Error enviando reporte por WhatsApp: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }
