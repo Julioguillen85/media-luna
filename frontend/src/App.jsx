@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Bot, Loader2 } from 'lucide-react';
+import { ShoppingBag, Bot, Loader2, MessageCircle } from 'lucide-react';
 import Navbar from './components/layout/Navbar';
 import HeroSection from './components/layout/HeroSection';
 import Footer from './components/layout/Footer';
@@ -32,8 +32,8 @@ const BACKUP_OPTIONS = {
   toppings: ["Manguitos", "Picafresas", "Lombrices", "Cacahuates", "Rellerindos", "Panditas", "Paletas", "Churro loko", "Sandías", "Lombrices ácidas", "Bolitochas de sandía", "Frutitas de gomita", "Tiburones de gomita", "Aros de durazno", "Cacahuate salado"]
 };
 
-export const CUSTOMIZABLE_IDS = [6];
-export const TRAY_IDS = [8];
+export const isCustomizable = (p) => p && (p.name || '').toLowerCase().includes('papas preparadas');
+export const isTray = (p) => p && (p.name || '').toLowerCase().includes('charola de snacks');
 
 const INITIAL_PRODUCTS = [
   { id: 6, name: "Papas Preparadas (Bowl)", category: "Snacks", desc: "Elige Tamaño (1/4 o 1/2) + Base + Complementos + Toppings.", keywords: ["papas", "bowl", "preparadas"], img: "/images/papas-preparadas.jpg", gallery: ["/images/papas-preparadas.jpg"] },
@@ -53,18 +53,24 @@ const INITIAL_PRODUCTS = [
   { id: 15, name: "Tablón", category: "Rentas", desc: "Mesa rectangular (2.40m) para 10 personas.", keywords: ["tablon", "mesa", "rectangular"], img: "/images/tablon.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 150 },
   { id: 16, name: "Tablón (Paquete)", category: "Rentas", desc: "Incluye tablón, mantel blanco y 10 sillas plegables.", keywords: ["tablon", "paquete", "sillas"], img: "/images/tablon.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 350 },
   { id: 17, name: "Brincolín", category: "Rentas", desc: "Brincolín inflable para niños (4x4m).", keywords: ["brincolin", "inflable", "juegos"], img: "/images/brincolin.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 600 },
+  { id: 18, name: "Brincolín Grande", category: "Rentas", desc: "Brincolín inflable grande (5x5m).", keywords: ["brincolin", "inflable", "grande", "juegos"], img: "/images/brincolin.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 800 },
 ];
 const INITIAL_CATEGORIES = ["Snacks", "Bebidas", "Rentas"];
 
 import { useAuth } from './context/AuthContext';
 import { useNotification } from './context/NotificationContext';
 import { authService } from './services/authService';
+import { isDiscountActive } from './lunitaUtils';
 
 export default function App() {
   const { user, login: authLogin, logout: authLogout } = useAuth();
   const { requestPermission } = useNotification();
 
-  const [view, setView] = useState('home');
+  const [view, setView] = useState(() => {
+    // If on /admin path and already authenticated, go straight to admin
+    if (window.location.pathname === '/admin') return 'home';
+    return 'home';
+  });
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [options, setOptions] = useState(BACKUP_OPTIONS);
@@ -101,7 +107,7 @@ export default function App() {
   };
 
   const [checkoutFormData, setCheckoutFormData] = useState({
-    name: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
+    name: '', email: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
   });
 
   const refreshData = () => {
@@ -135,11 +141,23 @@ export default function App() {
     }
   }, [isAdmin]);
 
+  // Auto-detect /admin path and show login or go to admin
+  useEffect(() => {
+    if (window.location.pathname === '/admin') {
+      if (isAdmin) {
+        setView('admin');
+      } else {
+        setShowLogin(true);
+      }
+    }
+  }, []);
+
   const handleLogin = async (u, p) => {
     const success = await authLogin(u, p);
     if (success) {
       setShowLogin(false);
       setView('admin');
+      window.history.pushState({}, '', '/admin');
       showToast('Bienvenido Admin', 'success');
       // Request push permission after login
       requestPermission();
@@ -151,14 +169,15 @@ export default function App() {
   const handleLogout = () => {
     authLogout();
     setView('home');
+    window.history.pushState({}, '', '/');
     showToast('Sesión cerrada', 'info');
   };
 
   const handleProductClick = (product, openGallery = false) => {
-    if (openGallery && product.gallery && product.gallery.length > 0) { setGalleryImages(product.gallery); setGalleryModalOpen(true); return; }
+    if (openGallery) { const imgs = [product.img, ...(product.gallery || [])].filter(Boolean); if (imgs.length > 0) { setGalleryImages(imgs); setGalleryModalOpen(true); return; } }
     const inCart = cart.find(item => item.id === product.id);
-    if (inCart && !(CUSTOMIZABLE_IDS.includes(product.id) || TRAY_IDS.includes(product.id))) { removeFromCart(inCart.cartId); return; }
-    if (CUSTOMIZABLE_IDS.includes(product.id) || TRAY_IDS.includes(product.id)) { setProductToCustomize(product); setCustomModalOpen(true); }
+    if (inCart && !(isCustomizable(product) || isTray(product))) { removeFromCart(inCart.cartId); return; }
+    if (isCustomizable(product) || isTray(product)) { setProductToCustomize(product); setCustomModalOpen(true); }
     else if (product.category === 'Snacks' || product.category === 'Bebidas' || product.category === 'Rentas' || product.productType === 'RENTAL') {
       setProductForBulk({ product, customization: null });
       setBulkModalOpen(true);
@@ -335,15 +354,25 @@ export default function App() {
       setOrders(orders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
     } else {
       try {
-        await authService.fetch(`${API_URL}/orders/${orderId}/status`, {
+        const token = localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ status: newStatus })
         });
+
+        if (!res.ok) {
+          console.error('Status update failed with HTTP', res.status);
+          return;
+        }
+
         setOrders(orders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+        showToast(`Pedido #${orderId} actualizado a: ${newStatus}`, 'success');
       } catch (err) {
         console.error('Error updating order status:', err);
-        alert('Error al actualizar el estado');
       }
     }
   };
@@ -402,11 +431,26 @@ export default function App() {
   };
 
   const handleCheckoutSuccess = async () => {
+    // 1. Map items to enforce calculated bulk price over the $45 unit price base
+    const finalItems = cart.map(item => ({
+      ...item,
+      price: item.totalPrice || item.price,
+      quantity: item.quantity || 1
+    }));
+
+    // 2. Compute order total
+    const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+    const rawSubtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+    const discountApplies = isDiscountActive();
+    const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+    const finalTotal = rawSubtotal - discountAmount;
+
     // Create order object
     const newOrder = {
       ...checkoutFormData,
       customer: checkoutFormData.name,
-      items: cart,
+      total: finalTotal,
+      items: finalItems,
       status: 'PENDING',
       createdAt: new Date().toISOString()
     };
@@ -423,6 +467,9 @@ export default function App() {
         setOrders(prev => [...prev, savedOrder]);
         // Update newOrder with the ID from the backend so the confirmation view has it
         newOrder.id = savedOrder.id;
+        if (savedOrder.paymentLink) {
+          newOrder.paymentLink = savedOrder.paymentLink;
+        }
       } catch (err) {
         console.error("Error saving order:", err);
       }
@@ -434,7 +481,7 @@ export default function App() {
     setIsCheckoutModalOpen(false);
     setCart([]);
     setCheckoutFormData({
-      name: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
+      name: '', email: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
     });
   };
 
@@ -472,8 +519,7 @@ export default function App() {
                         categories={activeCategory === 'snacks' ? ['Snacks'] : ['Bebidas']}
                         cart={cart}
                         onProductClick={handleProductClick} removeFromCart={removeFromCart}
-                        CUSTOMIZABLE_IDS={CUSTOMIZABLE_IDS}
-                        TRAY_IDS={TRAY_IDS}
+                        activeCategory={activeCategory} setActiveCategory={setActiveCategory}
                       />
                     ) : (
                       <ProductGrid
@@ -481,8 +527,7 @@ export default function App() {
                         categories={['Rentas']}
                         cart={cart}
                         onProductClick={handleProductClick} removeFromCart={removeFromCart}
-                        CUSTOMIZABLE_IDS={CUSTOMIZABLE_IDS}
-                        TRAY_IDS={TRAY_IDS}
+                        activeCategory={activeCategory} setActiveCategory={setActiveCategory}
                       />
                     )}
                   </div>
@@ -531,7 +576,7 @@ export default function App() {
         )}
       </main>
 
-      <Footer />
+      {view !== 'admin' && <Footer />}
 
       {/* Floating Buttons */}
       {cart.length > 0 && (
@@ -540,6 +585,7 @@ export default function App() {
           <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-pulse">{cart.length}</span>
         </button>
       )}
+
 
       {view !== 'admin' && !isBotOpen && (
         <div className={`fixed z-40 transition-all duration-500 ease-in-out right-6 ${cart.length > 0 ? 'max-md:bottom-[170px] md:bottom-28' : 'max-md:bottom-[96px] md:bottom-6'}`}>
@@ -667,7 +713,7 @@ export default function App() {
       )}
 
       {view !== 'admin' && (
-        <MobileBottomNav activeCategory={activeCategory} setActiveCategory={setActiveCategory} isBotOpen={isBotOpen} />
+        <MobileBottomNav activeCategory={activeCategory} setActiveCategory={setActiveCategory} isBotOpen={isBotOpen} products={products} onProductClick={handleProductClick} />
       )}
     </div>
   );

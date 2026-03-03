@@ -87,11 +87,11 @@ export async function getScheduleSuggestion() {
     return res.json();
 }
 
-export async function generateImage({ product, style, generatedText }) {
+export async function generateImage({ product, style, generatedText, images }) {
     const res = await fetch(`${API_BASE}/generate-image`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ product, style, generatedText })
+        body: JSON.stringify({ product, style, generatedText, images })
     });
     if (!res.ok) throw new Error('Error generando imagen');
     return res.json();

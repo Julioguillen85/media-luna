@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, Scissors, CalendarDays, Sparkles, AlertCircle } from 'lucide-react';
+import { isDiscountActive } from '../../lunitaUtils';
 
 export default function DiscountTimer() {
+    // If we're out of bounds (10 PM to 8 AM), just disappear entirely.
+    if (!isDiscountActive()) return null;
+
     const [timeLeft, setTimeLeft] = useState('');
     const [isActive, setIsActive] = useState(false);
     const [showExpiredMessage, setShowExpiredMessage] = useState(false);

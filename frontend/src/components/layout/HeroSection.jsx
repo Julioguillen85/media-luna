@@ -32,8 +32,13 @@ export default function HeroSection({ openBot, setActiveCategory }) {
                         <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md hover:shadow-lg">
                             <Facebook size={18} />
                         </a>
-                        <a href="https://wa.me/523141234567" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center hover:scale-110 transition-transform shadow-md hover:shadow-lg">
-                            <MessageCircle size={18} />
+                    </div>
+                    {/* Contáctanos */}
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400 transition-colors duration-300">Contáctanos:</span>
+                        <a href="https://wa.me/523123099318" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-1.5 rounded-full text-xs font-bold border border-green-200 dark:border-green-700/50 hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors shadow-sm">
+                            <MessageCircle size={14} />
+                            312 309 9318
                         </a>
                     </div>
 

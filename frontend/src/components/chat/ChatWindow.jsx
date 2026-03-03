@@ -5,7 +5,8 @@ import {
     detectIntent,
     getRandomResponse,
     RESPONSES,
-    validators
+    validators,
+    isDiscountActive
 } from '../../lunitaUtils';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
@@ -14,8 +15,7 @@ import MenuCheckboxPanel from './MenuCheckboxPanel';
 
 const BUSINESS_PHONE = '523123099318';
 
-const CUSTOMIZABLE_IDS = [6];
-const TRAY_IDS = [8];
+import { isCustomizable, isTray } from '../../App';
 
 // Function isToday removed; discount applies to all same-day bookings
 
@@ -43,7 +43,10 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const cartRef = useRef(cart);
+    useEffect(() => { cartRef.current = cart; }, [cart]);
     const [useAI, setUseAI] = useState(true);
+    const [orderSubmitted, setOrderSubmitted] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -76,7 +79,8 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                             price: p.price,
                             rentalPricePerDay: p.rentalPricePerDay,  // ← Agregar esto
                             productType: p.productType,               // ← Y esto para que Lunita sepa si es renta
-                            priceTiers: p.priceTiers
+                            priceTiers: p.priceTiers,
+                            quarterPriceTiers: p.quarterPriceTiers
                         })),
                         cart: cart.map(item => ({
                             name: item.name,
@@ -203,13 +207,18 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
                 const botAskedConfirmation = /agrego al carrito|lo agrego|agregarlo|confirmas|deseas agregar|añado|es correcto|¿correcto|correcto\?|le parece bien|así quedamos|proceder|procedemos|te parece|confirmamos|esta combinación|esta opcion/i.test(lastBotMessage);
 
-                const isDirectRentalOrder = /agrégame|agrega|ponme|dame|añade/i.test(text) && /tablon|mesa|brincolin|silla/i.test(text);
+                const isDirectRentalOrder = /agrega|ponme|dame|añade|quiero|necesito|me das|me pones/i.test(text) && /tablon|mesa|brincolin|silla/i.test(text);
 
-                const isVariantSelection = /con mantel|con sillas|solos|solas|sin sillas/i.test(text) && /tablon|mesa|brincolin|renta/i.test(lastBotMessage);
+                const isVariantSelection = (
+                    /con mantel|con sillas|solos|solas|sin sillas/i.test(text) ||
+                    /\b(sí|si|ándale|va|dale|claro|ok|sale)\b/i.test(text)
+                ) && /tablon|mesa|brincolin|silla.*mantel|sillas.*precio/i.test(lastBotMessage);
 
-                const userConfirmed = /\b(sí|si|ándale|andale|va|dale|agr[eé]galo|claro|ok|okay|perfecto|adelante|ponlo|sale|así|listo)\b/i.test(text.trim());
+                const userConfirmed = /\b(un|uno|una|dos|tres|cuatro|cinco|sí|si|ándale|andale|va|dale|agr[eé]galo|claro|ok|okay|perfecto|adelante|ponlo|sale|así|listo)\b/i.test(text.trim());
 
-                const canExecuteSetQty = isDirectRentalOrder || isVariantSelection || hasBowlSize || (botAskedConfirmation && userConfirmed);
+                const isQuantitativeRequest = /\b\d+\b/.test(text.trim());
+
+                const canExecuteSetQty = isDirectRentalOrder || hasBowlSize || (botAskedConfirmation && userConfirmed) || isQuantitativeRequest;
 
                 while ((setMatch = setQtyRegex.exec(rawMessage)) !== null) {
                     const qty = parseInt(setMatch[1], 10);
@@ -244,8 +253,8 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                     }
 
                     if (productToUpdate) {
-                        if (CUSTOMIZABLE_IDS.includes(productToUpdate.id) || TRAY_IDS.includes(productToUpdate.id)) {
-                            interceptedCustomizable = { ...productToUpdate, priceOverride };
+                        if (isCustomizable(productToUpdate) || isTray(productToUpdate)) {
+                            interceptedCustomizable = { ...productToUpdate, quantity: qty, priceOverride: priceOverride };
                         } else if (onSetQuantity) {
                             onSetQuantity(productToUpdate, qty, null, priceOverride, productToUpdate.productType === 'RENTAL');
                             const existingIndex = simulatedCart.findIndex(item => item.id === productToUpdate.id);
@@ -272,9 +281,9 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                     );
 
                     if (productToAdd) {
-                        if (CUSTOMIZABLE_IDS.includes(productToAdd.id) || TRAY_IDS.includes(productToAdd.id)) {
+                        if (isCustomizable(productToAdd) || isTray(productToAdd)) {
                             // Intercept: Do not add to cart yet
-                            interceptedCustomizable = productToAdd;
+                            interceptedCustomizable = { ...productToAdd, quantity: qty };
                         } else {
                             onAddProducts({
                                 ...productToAdd,
@@ -300,7 +309,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
                     let textResult = displayMessage;
 
-                    if (TRAY_IDS.includes(interceptedCustomizable.id)) {
+                    if (isTray(interceptedCustomizable)) {
                         if (!textResult.toLowerCase().includes("personalizar")) {
                             textResult += `\n\n¡Genial! Vamos a personalizar tu ${interceptedCustomizable.name}.`;
                         }
@@ -335,8 +344,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                             textResult += ' ¿Qué tamaño prefieres? 🌙';
                         }
                         return {
-                            text: textResult,
-                            choices: [{ id: 'q', name: 'Bowl 1/4' }, { id: 'h', name: 'Bowl 1/2' }]
+                            text: textResult
                         };
                     }
                 }
@@ -353,8 +361,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                         setProductToCustomize(bowlProduct);
                         setBotState('ASK_SIZE');
                         return {
-                            text: displayMessage + '\n\n¿Qué tamaño quieres? 🌙',
-                            choices: [{ id: 'q', name: 'Bowl 1/4' }, { id: 'h', name: 'Bowl 1/2' }]
+                            text: displayMessage + '\n\n¿Qué tamaño quieres? 🌙'
                         };
                     }
                     // Si no era sobre papas, ignorar la acción y solo mostrar el mensaje
@@ -364,7 +371,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                 if (aiResponse.action === 'start_tray_builder') {
                     const lastBotText = messages.filter(m => m.role === 'bot').slice(-1)[0]?.text || '';
                     if (/charola|snack/i.test(lastBotText)) {
-                        const trayProduct = products.find(p => TRAY_IDS.includes(p.id)) || products.find(p => p.name.toLowerCase().includes('charola'));
+                        const trayProduct = products.find(p => isTray(p)) || products.find(p => p.name.toLowerCase().includes('charola'));
                         setProductToCustomize(trayProduct);
                         setBotState('ASK_TRAY_BASE');
                         return {
@@ -381,8 +388,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                 // Quote request for bowl size
                 if (aiResponse.action === 'ask_bowl_size_quote') {
                     return {
-                        text: displayMessage,
-                        choices: [{ id: 'sz_q_quote', name: 'Bowl 1/4' }, { id: 'sz_h_quote', name: 'Bowl 1/2' }]
+                        text: displayMessage
                     };
                 }
                 if (aiResponse.action === 'show_menu') {
@@ -397,7 +403,8 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
                 // ── STEP 2: Handle fully collected Order Complete ──
                 if (orderCompleteData) {
-                    setCustomerData(prev => ({ ...prev, ...orderCompleteData }));
+                    const finalData = { ...customerData, ...orderCompleteData };
+                    setCustomerData(finalData);
                     setBotState('IDLE');
                     // Delay para que React procese primero los SET_QTY anteriores
                     await new Promise(resolve => setTimeout(resolve, 100));
@@ -420,7 +427,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
         if (typeof intent === 'string') {
             switch (intent) {
                 case 'goodbye':
-                    if (cart.length > 0) {
+                    if (cart.length > 0 && !orderSubmitted) {
                         return { text: getRandomResponse(RESPONSES.goodbye), showOrderSummary: true };
                     }
                     return { text: getRandomResponse(RESPONSES.goodbye), type: 'exit' };
@@ -437,14 +444,13 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             const matched = intent.products;
             if (matched.length === 1) {
                 const product = matched[0];
-                if (CUSTOMIZABLE_IDS.includes(product.id)) {
+                if (isCustomizable(product)) {
                     setBotState('ASK_SIZE');
                     setProductToCustomize(product);
                     return {
-                        text: `¡Órale! 🥔 Vamos a armar tus ${product.name}. ¿Qué tamaño prefieres?`,
-                        choices: [{ id: 'q', name: 'Bowl 1/4' }, { id: 'h', name: 'Bowl 1/2' }]
+                        text: `¡Órale! 🥔 Vamos a armar tus ${product.name}. ¿Qué tamaño prefieres?`
                     };
-                } else if (TRAY_IDS.includes(product.id)) {
+                } else if (isTray(product)) {
                     setBotState('ASK_TRAY_BASE');
                     setProductToCustomize(product);
                     return {
@@ -482,16 +488,16 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             setBotState('IDLE');
             return { text: "Okay, cancelé el armado. ¿Quieres intentar con otro producto? 😊" };
         }
-        return { text: "Por favor usa las opciones que te muestro en pantalla para armar tu pedido. 👆" };
+        return { text: "Por favor usa las opciones que te muestro en pantalla para armar tu pedido.👆" };
     };
 
     const handleChoiceClick = (choice) => {
         if (choice.category) { // Product click
-            if (CUSTOMIZABLE_IDS.includes(choice.id)) {
+            if (isCustomizable(choice)) {
                 setBotState('ASK_SIZE');
                 setProductToCustomize(choice);
-                setMessages(prev => [...prev, { role: 'user', text: choice.name }, { role: 'bot', text: `¡Claro! Vamos a armar tus ${choice.name}. ¿Qué tamaño prefieres?`, choices: [{ id: 'q', name: 'Bowl 1/4' }, { id: 'h', name: 'Bowl 1/2' }] }]);
-            } else if (TRAY_IDS.includes(choice.id)) {
+                setMessages(prev => [...prev, { role: 'user', text: choice.name }, { role: 'bot', text: `¡Claro! Vamos a armar tus ${choice.name}. ¿Qué tamaño prefieres?` }]);
+            } else if (isTray(choice)) {
                 setBotState('ASK_TRAY_BASE');
                 setProductToCustomize(choice);
                 setMessages(prev => [...prev, { role: 'user', text: choice.name }, { role: 'bot', text: `¡Genial! Vamos a personalizar tu ${choice.name}. Primero selecciona tus 2 bases naturales:`, selectionType: 'bases', options: options.bases, min: 1, max: 2 }]);
@@ -544,7 +550,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             const finalItem = { ...currentBowl, toppings: selected };
             onAddProducts(productToCustomize, finalItem);
             setBotState('IDLE');
-            setMessages(prev => [...prev, { role: 'user', text: `Toppings: ${selected.join(', ')}` }, { role: 'bot', text: `¡Listo, listo! 🎉 Tu ${productToCustomize?.name || 'producto'} está en el carrito.` }]);
+            setMessages(prev => [...prev, { role: 'user', text: `Toppings: ${selected.join(', ')}` }, { role: 'bot', text: `¡Listo, listo! 🎉 Tu ${productToCustomize?.name || 'producto'} está en el carrito. ¿Algo más que desees ordenar o información? ¿O sería todo? 🌙` }]);
         }
     };
 
@@ -580,7 +586,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             return acc + unitPrice * qty;
         }, 0);
 
-        const discountApplies = true;
+        const discountApplies = isDiscountActive();
         let discountAmount = 0;
         if (discountApplies && total > 0) {
             discountAmount = total * 0.15;
@@ -650,9 +656,19 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             case 'CONFIRM_ORDER':
                 if (text.includes('Confirmar') || text.match(/s[ií]|ok/i)) {
                     onAutoFillCheckout(customerData);
-                    submitOrderToBackend();
                     setBotState('IDLE');
-                    return { text: "¡Pedido confirmado! 🎉 Tu pedido ha sido registrado automáticamente. Aquí tienes el resumen final para enviarlo.", whatsappCta: true };
+
+                    // Call backend here and get the result synchronously for the chat
+                    submitOrderToBackend().then((createdOrder) => {
+                        const baseText = "¡Pedido confirmado! 🎉 Tu pedido ha sido registrado automáticamente.";
+
+                        let finalMsg = { role: 'bot', text: baseText + " Aquí tienes el resumen final para enviarlo.", whatsappCta: true };
+
+                        setMessages(prev => [...prev, finalMsg]);
+                    });
+
+                    // Return a temporary loading message for the chat bubble
+                    return { text: "Procesando tu pedido, dame un segundito... ⏳", hideLoading: true };
                 } else if (text.includes('Cancelar')) {
                     setBotState('IDLE');
                     return { text: "Cancelado." };
@@ -667,9 +683,24 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
         return `Resumen:\n${data.name} (${data.phone})\n${data.date} a las ${data.time}\n\n${totalItems} productos/artículos.\n\n¿Confirmar?`;
     };
 
-    const submitOrderToBackend = async (data = customerData, currentCart = cart) => {
+    const submitOrderToBackend = async (data = customerData, currentCart = null) => {
         try {
-            await fetch('/api/orders', {
+            const effectiveCart = currentCart || cartRef.current;
+            const finalItems = effectiveCart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.totalPrice || item.price,
+                quantity: item.quantity || 1,
+                customization: item.customization || null
+            }));
+
+            const snackSubtotal = effectiveCart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+            const rawSubtotal = effectiveCart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+            const discountApplies = isDiscountActive();
+            const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+            const finalTotal = rawSubtotal - discountAmount;
+
+            const response = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -677,16 +708,23 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                     phone: data.phone || '',
                     peopleCount: data.peopleCount || '',
                     eventLocation: data.eventLocation || '',
+                    email: data.email || '',
                     date: data.date || '',
                     time: data.time || '',
-                    items: currentCart,
+                    total: finalTotal,
+                    items: finalItems,
                     status: 'PENDING',
                     createdAt: new Date().toISOString()
                 })
             });
             console.log('Pedido enviado automáticamente al backend');
+            if (response.ok) {
+                return await response.json();
+            }
+            return null;
         } catch (error) {
             console.error('Error enviando pedido:', error);
+            return null;
         }
     };
 
@@ -765,12 +803,12 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
                             {/* Elote Split Selector */}
                             {(() => {
-                                const isElote = ['elote en vaso', 'tostielote'].some(name => quoteModal.product?.name?.toLowerCase().includes(name));
+                                const isElote = ['elote en vaso', 'elote revolcado'].some(name => quoteModal.product?.name?.toLowerCase().includes(name));
                                 if (!isElote || !quoteModal.peopleCount || isNaN(quoteModal.peopleCount) || parseInt(quoteModal.peopleCount) < 30) return null;
 
                                 const total = parseInt(quoteModal.peopleCount);
                                 const currentProdName = quoteModal.product.name;
-                                const otherElote = products.find(p => ['elote en vaso', 'tostielote'].some(name => p.name?.toLowerCase().includes(name)) && p.id !== quoteModal.product.id);
+                                const otherElote = products.find(p => ['elote en vaso', 'elote revolcado'].some(name => p.name?.toLowerCase().includes(name)) && p.id !== quoteModal.product.id);
 
                                 if (!otherElote) return null;
 
@@ -896,7 +934,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                                 }}
                             />
                         )}
-                        {msg.showOrderSummary && cart.length > 0 && (() => {
+                        {msg.showOrderSummary && cart.length > 0 && !orderSubmitted && (() => {
                             let subtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
                             const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
                             const discountApplies = true;
@@ -960,6 +998,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                                                     }
                                                 ]);
                                                 setBotState('IDLE');
+                                                setOrderSubmitted(true);
                                             }}
                                             className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors shadow-lg text-sm"
                                         >

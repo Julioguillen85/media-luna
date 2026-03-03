@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ShoppingBag, Sparkles, Utensils, CupSoda, CheckCircle, Bot, MapPin, Image as ImageIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
+
+const CATEGORIES = ['snacks', 'drinks', 'rental'];
 
 export default function ProductGrid({
     products,
@@ -8,11 +10,42 @@ export default function ProductGrid({
     cart,
     onProductClick,
     removeFromCart,
-    CUSTOMIZABLE_IDS,
-    TRAY_IDS
+    activeCategory,
+    setActiveCategory
 }) {
+    const touchStartX = useRef(0);
+    const touchEndX = useRef(0);
+    const hasMoved = useRef(false);
+
+    const handleSwipe = () => {
+        if (!hasMoved.current) return; // ignore simple taps
+        const diff = touchStartX.current - touchEndX.current;
+        if (Math.abs(diff) > 80 && activeCategory && setActiveCategory) {
+            const idx = CATEGORIES.indexOf(activeCategory);
+            if (diff > 0 && idx < CATEGORIES.length - 1) {
+                setActiveCategory(CATEGORIES[idx + 1]);
+            } else if (diff < 0 && idx > 0) {
+                setActiveCategory(CATEGORIES[idx - 1]);
+            }
+        }
+        hasMoved.current = false;
+    };
+
     return (
-        <div className="space-y-10">
+        <div
+            className="space-y-10"
+            onTouchStart={(e) => {
+                touchStartX.current = e.touches[0].clientX;
+                touchEndX.current = e.touches[0].clientX;
+                hasMoved.current = false;
+            }}
+            onTouchMove={(e) => {
+                touchEndX.current = e.touches[0].clientX;
+                const diff = Math.abs(touchStartX.current - touchEndX.current);
+                if (diff > 10) hasMoved.current = true;
+            }}
+            onTouchEnd={handleSwipe}
+        >
             <div id="products" className="space-y-10">
                 {categories.map(cat => {
                     let catProducts = products.filter(p => p.category === cat);
@@ -27,7 +60,6 @@ export default function ProductGrid({
                             if (!isPrimaryA && isPrimaryB) return 1;
 
                             if (isPrimaryA && isPrimaryB) {
-                                // Put Papas (6) before Elote (4)
                                 if (a.id === 6 && b.id === 4) return -1;
                                 if (a.id === 4 && b.id === 6) return 1;
                             }
@@ -56,8 +88,6 @@ export default function ProductGrid({
                                         cart={cart}
                                         onProductClick={onProductClick}
                                         removeFromCart={removeFromCart}
-                                        CUSTOMIZABLE_IDS={CUSTOMIZABLE_IDS}
-                                        TRAY_IDS={TRAY_IDS}
                                     />
                                 ))}
                             </div>

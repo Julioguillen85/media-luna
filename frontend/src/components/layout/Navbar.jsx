@@ -41,13 +41,9 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                             )}
                         </button>
 
-                        {isAdmin ? (
+                        {isAdmin && (
                             <button onClick={onLogout} className="text-rose-600 dark:text-rose-400 font-semibold text-sm flex items-center gap-1 px-3 py-2 rounded-xl hover:bg-rose-50 dark:hover:bg-slate-800 transition-colors">
                                 <LogOut size={16} /> <span className="hidden sm:inline">Salir</span>
-                            </button>
-                        ) : (
-                            <button onClick={() => setShowLogin(true)} className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition p-2 rounded-full hover:bg-rose-50 dark:hover:bg-slate-800">
-                                <Lock size={18} />
                             </button>
                         )}
                         {isAdmin && view !== 'admin' && (

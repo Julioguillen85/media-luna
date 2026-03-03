@@ -35,6 +35,10 @@ public class WhatsAppService {
             for (OrderItem item : order.getItems()) {
                 body.append("• ").append(item.getName()).append("\n");
             }
+            if (order.getPaymentLink() != null && !order.getPaymentLink().isEmpty()) {
+                body.append("\n💳 *Link de anticipo de Mercado Pago (50%) generado:*\n");
+                body.append(order.getPaymentLink()).append("\n");
+            }
             Map<String, Object> payload = new HashMap<>();
             payload.put("messaging_product", "whatsapp");
             payload.put("to", "52" + businessNumber);

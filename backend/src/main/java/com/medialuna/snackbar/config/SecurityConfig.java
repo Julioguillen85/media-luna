@@ -38,6 +38,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/options").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").permitAll()
                         .requestMatchers("/api/chat").permitAll() // Allow Chatbot
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/upload").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/orders/*/status").permitAll() // Allow
                                                                                                                       // status
                                                                                                                       // updates

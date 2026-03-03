@@ -28,6 +28,8 @@ public class ApiController {
     private OptionsRepository optionsRepository;
     @Autowired
     private WhatsAppService whatsAppService;
+    @Autowired
+    private com.medialuna.snackbar.service.MercadoPagoService mercadoPagoService;
 
     @GetMapping("/products")
     public List<Product> getProducts() {
@@ -45,10 +47,31 @@ public class ApiController {
     }
 
     @PutMapping("/orders/{id}/status")
-    public ResponseEntity<?> updateOrderStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    @Transactional
+    public ResponseEntity<?> updateOrderStatus(@PathVariable("id") Long id, @RequestBody Map<String, String> body) {
         return orderRepository.findById(id).map(order -> {
-            order.setStatus(body.get("status"));
+            String newStatus = body.get("status");
+            order.setStatus(newStatus);
             orderRepository.save(order);
+
+            // Force-initialize items while still in transaction
+            if (order.getItems() != null) {
+                order.getItems().size();
+            }
+
+            // Dispatch async emails on status changes
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    if ("CONFIRMED".equalsIgnoreCase(newStatus)) {
+                        emailService.sendOrderConfirmedEmail(order);
+                    } else if ("COMPLETED".equalsIgnoreCase(newStatus)) {
+                        emailService.sendOrderCompletedEmail(order);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error enviando email al cliente: " + e.getMessage());
+                }
+            });
+
             return ResponseEntity.ok(order);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -107,11 +130,23 @@ public class ApiController {
             }
         }
         CustomerOrder saved = orderRepository.save(order);
+
+        // Generate MP Payment Link for 50% deposit
+        try {
+            String paymentLink = mercadoPagoService.generatePaymentLink(saved);
+            if (paymentLink != null) {
+                saved.setPaymentLink(paymentLink);
+                saved = orderRepository.save(saved);
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not generation MP Payment link: " + e.getMessage());
+        }
+
         whatsAppService.sendOrderNotification(saved);
 
         // Trigger generic notifications (Async ideally, but sync for now)
         try {
-            emailService.sendOrderNotification(saved);
+            emailService.sendOrderNotification(saved); // Admin email
         } catch (Exception e) {
             System.err.println("Error sending email: " + e.getMessage());
         }

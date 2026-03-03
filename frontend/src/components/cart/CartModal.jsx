@@ -30,9 +30,9 @@ export default function CartModal({ cart, onClose, removeFromCart, onContinueChe
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex-1 min-w-0">
                                             <span className="font-bold text-slate-900 dark:text-slate-100 transition-colors duration-300">{item.name || item.product?.name || 'Producto'}</span>
-                                            {item.customization && (
+                                            {item.customization && item.customization.size && (
                                                 <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold border transition-colors duration-300 ${item.customization.size === 'quarter' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/50' : 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/50'}`}>
-                                                    {item.customization.size === 'quarter' ? 'Bowl 1/4' : 'Bowl 1/2'}
+                                                    {item.customization.size === 'quarter' ? 'Bowl 1/4' : item.customization.size === 'half' ? 'Bowl 1/2' : item.customization.size}
                                                 </span>
                                             )}
                                         </div>
@@ -53,11 +53,11 @@ export default function CartModal({ cart, onClose, removeFromCart, onContinueChe
                                             </span>
                                         )}
                                     </div>
-                                    {item.customization && (
+                                    {item.customization && (item.customization.bases?.length > 0 || item.customization.complements?.length > 0 || item.customization.toppings?.length > 0) && (
                                         <div className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1 bg-white dark:bg-slate-900/50 p-2 rounded border border-slate-100 dark:border-slate-800/50 mt-3 transition-colors duration-300">
-                                            <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Base:</strong> {item.customization.bases.join(', ')}</p>
-                                            <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Complementos:</strong> {item.customization.complements.join(', ')}</p>
-                                            <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Toppings:</strong> {item.customization.toppings.join(', ')}</p>
+                                            {item.customization.bases?.length > 0 && <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Base:</strong> {item.customization.bases.join(', ')}</p>}
+                                            {item.customization.complements?.length > 0 && <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Complementos:</strong> {item.customization.complements.join(', ')}</p>}
+                                            {item.customization.toppings?.length > 0 && <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Toppings:</strong> {item.customization.toppings.join(', ')}</p>}
                                         </div>
                                     )}
                                 </div>

@@ -19,8 +19,13 @@ public class PriceTier {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    @JsonBackReference
+    @JsonBackReference("priceTiers")
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "quarter_product_id")
+    @JsonBackReference("quarterPriceTiers")
+    private Product quarterProduct;
 
     public PriceTier() {
     }

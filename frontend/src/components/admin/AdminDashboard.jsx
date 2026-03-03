@@ -65,7 +65,15 @@ export default function AdminDashboard({ products, categories, orders, options, 
             )}
 
             {/* Mobile Sidebar */}
-            <div className={`md:hidden fixed inset-0 w-full h-full bg-white dark:bg-slate-900 z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div
+                className={`md:hidden fixed inset-0 w-full h-full bg-white dark:bg-slate-900 z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                onTouchStart={(e) => { e.currentTarget._touchStartX = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                    const startX = e.currentTarget._touchStartX || 0;
+                    const endX = e.changedTouches[0].clientX;
+                    if (startX - endX > 80) setIsSidebarOpen(false);
+                }}
+            >
                 <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/20">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-amber-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
@@ -313,26 +321,28 @@ export default function AdminDashboard({ products, categories, orders, options, 
                                         {/* Pagination */}
                                         {totalPages > 1 && (
                                             <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 transition-colors duration-300">
-                                                <p className="text-sm text-slate-600 dark:text-slate-400 transition-colors duration-300">
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 transition-colors duration-300 hidden sm:block">
                                                     Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredProducts.length)} de {filteredProducts.length}
                                                 </p>
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-2 items-center w-full sm:w-auto justify-between sm:justify-end">
                                                     <button
                                                         onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                                         disabled={currentPage === 1}
-                                                        className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors duration-300"
+                                                        className="p-2 sm:px-3 sm:py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors duration-300"
                                                     >
-                                                        Anterior
+                                                        <span className="hidden sm:inline">Anterior</span>
+                                                        <span className="sm:hidden text-lg">←</span>
                                                     </button>
-                                                    <span className="px-3 py-1 text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors duration-300">
+                                                    <span className="hidden sm:inline px-3 py-1 text-sm font-semibold text-slate-700 dark:text-slate-300 transition-colors duration-300">
                                                         {currentPage} / {totalPages}
                                                     </span>
                                                     <button
                                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                                         disabled={currentPage === totalPages}
-                                                        className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors duration-300"
+                                                        className="p-2 sm:px-3 sm:py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-semibold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors duration-300"
                                                     >
-                                                        Siguiente
+                                                        <span className="hidden sm:inline">Siguiente</span>
+                                                        <span className="sm:hidden text-lg">→</span>
                                                     </button>
                                                 </div>
                                             </div>
