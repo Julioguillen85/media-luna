@@ -5,6 +5,8 @@ import com.medialuna.snackbar.model.Product;
 import com.medialuna.snackbar.model.PriceTier;
 import com.medialuna.snackbar.repository.OptionsRepository;
 import com.medialuna.snackbar.repository.ProductRepository;
+import com.medialuna.snackbar.model.GalleryImage;
+import com.medialuna.snackbar.repository.GalleryImageRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +16,25 @@ import java.util.List;
 @Configuration
 public class DatabaseSeeder {
         @Bean
-        CommandLineRunner initDatabase(ProductRepository productRepo, OptionsRepository optionsRepo) {
+        CommandLineRunner initDatabase(ProductRepository productRepo, OptionsRepository optionsRepo,
+                        GalleryImageRepository galleryRepo) {
                 return args -> {
+                        if (galleryRepo.count() == 0) {
+                                String[] defaultPhotos = {
+                                                "/images/tostilocos.jpeg",
+                                                "/images/bowl_un_medio.jpeg",
+                                                "/images/michelada.jpeg",
+                                                "/images/waffles.jpeg",
+                                                "/images/duro_preparado.jpeg",
+                                                "/images/azulito.jpeg"
+                                };
+                                for (String url : defaultPhotos) {
+                                        GalleryImage img = new GalleryImage();
+                                        img.setUrl(url);
+                                        img.setCreatedAt(java.time.Instant.now().toString());
+                                        galleryRepo.save(img);
+                                }
+                        }
                         if (optionsRepo.count() == 0) {
                                 IngredientOptions opts = new IngredientOptions();
                                 opts.setId(1L);
@@ -75,6 +94,15 @@ public class DatabaseSeeder {
                                                 new PriceTier(150, 199, 10200.0),
                                                 new PriceTier(200, 999, 13600.0));
 
+                                List<PriceTier> bowlChicoTiers = new ArrayList<>(List.of(
+                                                new PriceTier(30, 39, 1950.0), new PriceTier(40, 49, 2600.0),
+                                                new PriceTier(50, 59, 3250.0),
+                                                new PriceTier(60, 69, 3600.0), new PriceTier(70, 79, 4200.0),
+                                                new PriceTier(80, 89, 4800.0),
+                                                new PriceTier(90, 99, 5400.0), new PriceTier(100, 149, 5500.0),
+                                                new PriceTier(150, 199, 8250.0),
+                                                new PriceTier(200, 999, 11000.0)));
+
                                 List<PriceTier> postresTiers = List.of(
                                                 new PriceTier(30, 39, 1950.0), new PriceTier(40, 49, 2600.0),
                                                 new PriceTier(50, 59, 3000.0),
@@ -127,16 +155,19 @@ public class DatabaseSeeder {
                                                 new PriceTier(100, 149, 6500.0), new PriceTier(150, 199, 9750.0),
                                                 new PriceTier(200, 999, 13000.0));
 
+                                Product papas = new Product("Papas Preparadas (Bowl)", 200.0, "Snacks",
+                                                "Elige Tamaño (1/4 o 1/2). Precios por volumen: priceTiers=Bowl 1/2, quarterPriceTiers=Bowl 1/4.",
+                                                "/images/papas-preparadas.jpg",
+                                                List.of("papas", "bowl", "preparadas"),
+                                                new ArrayList<>(), bowlGrandeTiers);
+                                papas.setQuarterPriceTiers(bowlChicoTiers);
+
                                 productRepo.saveAll(List.of(
                                                 new Product("Elote en Vaso", 35.0, "Snacks",
                                                                 "Clásico esquite con mayonesa, queso y chile (Ver precios por volumen para eventos).",
                                                                 "/images/elote.jpg", List.of("elote", "esquite"),
                                                                 new ArrayList<>(), eloteTiers),
-                                                new Product("Papas Preparadas (Bowl)", 200.0, "Snacks",
-                                                                "Elige Tamaño (1/4 o 1/2). Precios por volumen y cotización aplicados al Bowl 1/2. Para Bowl 1/4 el mayoreo es menor ($1,950 x 30p, $5500 x 100p).",
-                                                                "/images/papas-preparadas.jpg",
-                                                                List.of("papas", "bowl", "preparadas"),
-                                                                new ArrayList<>(), bowlGrandeTiers),
+                                                papas,
                                                 new Product("Tostilocos", 85.0, "Snacks",
                                                                 "Tostitos con cueritos, jícama, pepino...",
                                                                 "/images/tostilocos.jpg",
@@ -183,6 +214,98 @@ public class DatabaseSeeder {
                                                                 "/images/cantarito.jpg", List.of("cantarito"),
                                                                 new ArrayList<>(), cantaritosTiers)));
                         }
+
+                        // ── MIGRATION: Populate Bowl 1/4 quarterPriceTiers for existing products ──
+                        productRepo.findAll().stream()
+                                        .filter(p -> p.getName().contains("Papas Preparadas"))
+                                        .filter(p -> p.getQuarterPriceTiers() == null
+                                                        || p.getQuarterPriceTiers().isEmpty())
+                                        .forEach(p -> {
+                                                List<PriceTier> qt = new ArrayList<>(List.of(
+                                                                new PriceTier(30, 39, 1950.0),
+                                                                new PriceTier(40, 49, 2600.0),
+                                                                new PriceTier(50, 59, 3250.0),
+                                                                new PriceTier(60, 69, 3600.0),
+                                                                new PriceTier(70, 79, 4200.0),
+                                                                new PriceTier(80, 89, 4800.0),
+                                                                new PriceTier(90, 99, 5400.0),
+                                                                new PriceTier(100, 149, 5500.0),
+                                                                new PriceTier(150, 199, 8250.0),
+                                                                new PriceTier(200, 999, 11000.0)));
+                                                p.setQuarterPriceTiers(qt);
+                                                productRepo.save(p);
+                                                System.out.println(
+                                                                "✅ Bowl 1/4 quarterPriceTiers migrated for: "
+                                                                                + p.getName());
+                                        });
+
+                        // ── MIGRATION: Populate priceTiers for Elotes Revolcados (same as Elote en
+                        // Vaso) ──
+                        productRepo.findAll().stream()
+                                        .filter(p -> p.getName().toLowerCase().contains("elotes revolcados")
+                                                        || p.getName().toLowerCase().contains("elote revolcado"))
+                                        .filter(p -> p.getPriceTiers() == null
+                                                        || p.getPriceTiers().isEmpty())
+                                        .forEach(p -> {
+                                                List<PriceTier> tiers = new ArrayList<>(List.of(
+                                                                new PriceTier(30, 39, 1500.0),
+                                                                new PriceTier(40, 49, 2000.0),
+                                                                new PriceTier(50, 59, 2500.0),
+                                                                new PriceTier(60, 69, 2820.0),
+                                                                new PriceTier(70, 79, 3290.0),
+                                                                new PriceTier(80, 89, 3760.0),
+                                                                new PriceTier(90, 99, 4230.0),
+                                                                new PriceTier(100, 109, 4500.0),
+                                                                new PriceTier(110, 119, 4950.0),
+                                                                new PriceTier(120, 129, 5400.0),
+                                                                new PriceTier(130, 139, 5850.0),
+                                                                new PriceTier(140, 149, 6300.0),
+                                                                new PriceTier(150, 159, 6750.0),
+                                                                new PriceTier(160, 169, 7200.0),
+                                                                new PriceTier(170, 179, 7650.0),
+                                                                new PriceTier(180, 189, 8100.0),
+                                                                new PriceTier(190, 199, 8550.0),
+                                                                new PriceTier(200, 999, 9000.0)));
+                                                tiers.forEach(pt -> pt.setProduct(p));
+                                                p.setPriceTiers(tiers);
+                                                productRepo.save(p);
+                                                System.out.println(
+                                                                "✅ priceTiers migrated for: "
+                                                                                + p.getName());
+                                        });
+
+                        // ── MIGRATION: Restore priceTiers for Elote en Vaso if missing ──
+                        productRepo.findAll().stream()
+                                        .filter(p -> p.getName().equalsIgnoreCase("Elote en Vaso"))
+                                        .filter(p -> p.getPriceTiers() == null
+                                                        || p.getPriceTiers().isEmpty())
+                                        .forEach(p -> {
+                                                List<PriceTier> tiers = new ArrayList<>(List.of(
+                                                                new PriceTier(30, 39, 1500.0),
+                                                                new PriceTier(40, 49, 2000.0),
+                                                                new PriceTier(50, 59, 2500.0),
+                                                                new PriceTier(60, 69, 2820.0),
+                                                                new PriceTier(70, 79, 3290.0),
+                                                                new PriceTier(80, 89, 3760.0),
+                                                                new PriceTier(90, 99, 4230.0),
+                                                                new PriceTier(100, 109, 4500.0),
+                                                                new PriceTier(110, 119, 4950.0),
+                                                                new PriceTier(120, 129, 5400.0),
+                                                                new PriceTier(130, 139, 5850.0),
+                                                                new PriceTier(140, 149, 6300.0),
+                                                                new PriceTier(150, 159, 6750.0),
+                                                                new PriceTier(160, 169, 7200.0),
+                                                                new PriceTier(170, 179, 7650.0),
+                                                                new PriceTier(180, 189, 8100.0),
+                                                                new PriceTier(190, 199, 8550.0),
+                                                                new PriceTier(200, 999, 9000.0)));
+                                                tiers.forEach(pt -> pt.setProduct(p));
+                                                p.setPriceTiers(tiers);
+                                                productRepo.save(p);
+                                                System.out.println(
+                                                                "✅ priceTiers restored for: "
+                                                                                + p.getName());
+                                        });
                 };
         }
 }

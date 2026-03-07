@@ -14,7 +14,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class SocialMediaService {
 
@@ -286,7 +288,7 @@ public class SocialMediaService {
 
         for (ScheduledPost post : duePosts) {
             try {
-                System.out.println("📤 Publicando post programado #" + post.getId() + " en " + post.getPlatform());
+                log.info("📤 Publicando post programado #{} en {}", post.getId(), post.getPlatform());
                 switch (post.getPlatform()) {
                     case FACEBOOK_PAGE:
                         if (post.getPostType() == ScheduledPost.PostType.STORY) {
@@ -305,9 +307,9 @@ public class SocialMediaService {
                         publishInstagramReel(post);
                         break;
                 }
-                System.out.println("✅ Post #" + post.getId() + " publicado exitosamente");
+                log.info("✅ Post #{} publicado exitosamente", post.getId());
             } catch (Exception e) {
-                System.err.println("❌ Error publicando post #" + post.getId() + ": " + e.getMessage());
+                log.error("❌ Error publicando post #{}: {}", post.getId(), e.getMessage());
             }
         }
     }

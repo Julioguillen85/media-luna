@@ -3,6 +3,7 @@ package com.medialuna.snackbar.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Data
@@ -37,8 +38,13 @@ public class Product {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean visible = true;
 
+    @JsonManagedReference("priceTiers")
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PriceTier> priceTiers;
+
+    @JsonManagedReference("quarterPriceTiers")
+    @OneToMany(mappedBy = "quarterProduct", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<PriceTier> quarterPriceTiers;
 
     public Product() {
     }
@@ -61,6 +67,13 @@ public class Product {
         this.priceTiers = priceTiers;
         if (priceTiers != null) {
             priceTiers.forEach(pt -> pt.setProduct(this));
+        }
+    }
+
+    public void setQuarterPriceTiers(List<PriceTier> quarterPriceTiers) {
+        this.quarterPriceTiers = quarterPriceTiers;
+        if (quarterPriceTiers != null) {
+            quarterPriceTiers.forEach(pt -> pt.setQuarterProduct(this));
         }
     }
 }

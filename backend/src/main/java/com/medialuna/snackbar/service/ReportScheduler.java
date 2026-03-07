@@ -12,7 +12,9 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @EnableScheduling
 public class ReportScheduler {
@@ -46,7 +48,7 @@ public class ReportScheduler {
         try {
             socialMediaService.processScheduledPosts();
         } catch (Exception e) {
-            System.err.println("⚠️ Error procesando posts programados: " + e.getMessage());
+            log.error("⚠️ Error procesando posts programados", e);
         }
     }
 
@@ -84,20 +86,20 @@ public class ReportScheduler {
             int currentHour = LocalTime.now().getHour();
 
             if (today == targetDay && currentHour == hour) {
-                System.out.println("📊 Generando reporte semanal de ventas...");
+                log.info("📊 Generando reporte semanal de ventas...");
 
                 if (whatsappEnabled && phone != null && !phone.equals("0000000000")) {
                     salesReportService.sendWhatsAppReport(phone);
-                    System.out.println("✅ Reporte enviado por WhatsApp a " + phone);
+                    log.info("✅ Reporte enviado por WhatsApp a {}", phone);
                 }
 
                 if (emailEnabled && email != null && !email.equals("admin@medialuna.com")) {
                     salesReportService.sendEmailReport(email);
-                    System.out.println("✅ Reporte enviado por Email a " + email);
+                    log.info("✅ Reporte enviado por Email a {}", email);
                 }
             }
         } catch (Exception e) {
-            System.err.println("⚠️ Error verificando reporte semanal: " + e.getMessage());
+            log.error("⚠️ Error verificando reporte semanal", e);
         }
     }
 }

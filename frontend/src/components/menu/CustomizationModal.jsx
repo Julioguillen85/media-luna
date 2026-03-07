@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { TRAY_IDS } from '../../App';
+import { isTray as checkIsTray } from '../../App';
 
 export default function CustomizationModal({ product, options, onClose, onConfirm }) {
-    const isTray = TRAY_IDS.includes(product.id);
+    const isTray = checkIsTray(product);
     const [size, setSize] = useState(isTray ? null : 'quarter');
     const [bases, setBases] = useState([]);
     const [complements, setComplements] = useState([]);

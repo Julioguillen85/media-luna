@@ -5,122 +5,187 @@ import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class ImageGenerationService {
 
-    @Value("${fal.api.key:DISABLED}")
+    @Value("${gemini.api.key:DISABLED}")
     private String apiKey;
+
+    private static final String GEMINI_MODEL = "gemini-3.1-flash-image-preview";
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/"
+            + GEMINI_MODEL + ":generateContent";
 
     private final RestTemplate restTemplate;
 
     public ImageGenerationService() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(15000);
-        factory.setReadTimeout(60000);
+        factory.setReadTimeout(120000);
         this.restTemplate = new RestTemplate(factory);
     }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.equals("DISABLED");
+        return apiKey != null && !apiKey.equals("DISABLED") && !apiKey.isEmpty();
     }
 
     /**
-     * Generate a marketing image using Fal.ai FLUX Pro API
+     * Generate a marketing banner using Gemini with optional reference images.
+     * 
+     * @param prompt        The text prompt describing the banner to generate
+     * @param imageDataList List of base64-encoded images (product photos) to use as
+     *                      reference
+     * @return Base64-encoded generated image (PNG)
      */
     @SuppressWarnings("unchecked")
-    public String generateImage(String prompt) {
+    public String generateImageWithReferences(String prompt, List<String> imageDataList) {
         if (!isConfigured()) {
-            throw new RuntimeException("Fal.ai API no configurada.");
+            throw new RuntimeException("Gemini API no configurada.");
         }
 
         try {
+            // Build parts array: text prompt + optional reference images
+            List<Map<String, Object>> parts = new ArrayList<>();
+            parts.add(Map.of("text", prompt));
+
+            // Add reference images if provided
+            if (imageDataList != null) {
+                for (String imgData : imageDataList) {
+                    // Strip data URL prefix if present (e.g., "data:image/jpeg;base64,")
+                    String base64 = imgData;
+                    String mimeType = "image/jpeg";
+                    if (imgData.startsWith("data:")) {
+                        int commaIdx = imgData.indexOf(",");
+                        if (commaIdx > 0) {
+                            String header = imgData.substring(0, commaIdx);
+                            base64 = imgData.substring(commaIdx + 1);
+                            if (header.contains("image/png"))
+                                mimeType = "image/png";
+                            else if (header.contains("image/webp"))
+                                mimeType = "image/webp";
+                        }
+                    }
+
+                    Map<String, Object> inlineData = new LinkedHashMap<>();
+                    inlineData.put("mime_type", mimeType);
+                    inlineData.put("data", base64);
+                    parts.add(Map.of("inline_data", inlineData));
+                }
+            }
+
+            // Build request body
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("contents", List.of(Map.of("parts", parts)));
+            body.put("generationConfig", Map.of(
+                    "responseModalities", List.of("TEXT", "IMAGE")));
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Key " + apiKey);
 
-            Map<String, Object> body = new LinkedHashMap<>();
-            body.put("prompt", prompt);
-
-            // Standard Fal.ai / FLUX params format for high quality images
-            body.put("image_size", "square_hd");
-            body.put("num_images", 1);
-            body.put("enable_safety_checker", true);
-
+            String url = GEMINI_URL + "?key=" + apiKey;
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            System.out.println("🖼️ Generando imagen con Fal.ai FLUX Pro...");
+            log.info("🖼️ Generando banner con Gemini ({})...", GEMINI_MODEL);
+            log.info("📸 Fotos de referencia: {}", imageDataList != null ? imageDataList.size() : 0);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    "https://fal.run/fal-ai/flux-pro/v1.1", entity, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                List<Map<String, Object>> images = (List<Map<String, Object>>) response.getBody().get("images");
-                if (images != null && !images.isEmpty()) {
-                    String imageUrl = (String) images.get(0).get("url");
-                    if (imageUrl != null) {
-                        System.out.println("✅ Imagen generada exitosamente con Fal.ai");
-                        return imageUrl;
+                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
+                if (candidates != null && !candidates.isEmpty()) {
+                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+                    if (content != null) {
+                        List<Map<String, Object>> responseParts = (List<Map<String, Object>>) content.get("parts");
+                        if (responseParts != null) {
+                            for (Map<String, Object> part : responseParts) {
+                                if (part.containsKey("inlineData")) {
+                                    Map<String, Object> inline = (Map<String, Object>) part.get("inlineData");
+                                    String imageBase64 = (String) inline.get("data");
+                                    String responseMime = (String) inline.get("mimeType");
+                                    if (imageBase64 != null) {
+                                        log.info("✅ Banner generado exitosamente con Gemini");
+                                        // Return as data URL for frontend display
+                                        String mime = responseMime != null ? responseMime : "image/png";
+                                        return "data:" + mime + ";base64," + imageBase64;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
-            throw new RuntimeException("Respuesta inesperada de Fal.ai");
+            throw new RuntimeException("Gemini no generó imagen. Verifica tu prompt e inténtalo de nuevo.");
         } catch (Exception e) {
-            System.err.println("❌ Error generando imagen Fal.ai: " + e.getMessage());
-            throw new RuntimeException("Error generando imagen: " + e.getMessage(), e);
+            log.error("❌ Error generando banner Gemini", e);
+            throw new RuntimeException("Error generando banner: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Build a rich marketing prompt using:
-     * - Product name
-     * - Visual style
-     * - AI-generated marketing text (for context)
+     * Simple text-to-image (no reference images)
+     */
+    public String generateImage(String prompt) {
+        return generateImageWithReferences(prompt, null);
+    }
+
+    /**
+     * Build a rich marketing prompt for Gemini banner generation.
+     * Gemini can understand reference images, so the prompt focuses on
+     * the desired layout, style, and text to include.
      */
     public String buildPromoPrompt(String productName, String style, String generatedText) {
         StringBuilder prompt = new StringBuilder();
 
-        // Base prompt focusing heavily on realistic food photography
-        prompt.append("Hyper-realistic, high-end commercial food photography. ");
+        prompt.append("Create a professional promotional banner/poster for a Mexican snack bar called 'Media Luna'. ");
         prompt.append(
-                "Mouth-watering presentation, focus on appetizing textures, glistening details, and perfect lighting. ");
-        prompt.append("Shot with a macro lens, 85mm, shallow depth of field, stunning bokeh, cinematic food styling. ");
+                "Use the provided product photos as reference — incorporate these REAL products into the banner design. ");
+        prompt.append("The banner must look like a real social media advertisement. ");
+        prompt.append("Include the brand name 'Media Luna' with a crescent moon symbol. ");
 
-        // Add product context
         if (productName != null && !productName.isEmpty()) {
-            prompt.append("The main subject is a delicious Mexican snack: ").append(productName).append(". ");
+            prompt.append("Featured products: ").append(productName).append(". ");
         }
 
-        // Use AI-generated text to add marketing context (for vibes only, not text)
+        // Extract occasion theming
         if (generatedText != null && !generatedText.isEmpty()) {
-            String textContext = generatedText.length() > 150
-                    ? generatedText.substring(0, 150)
+            String lower = generatedText.toLowerCase();
+
+            if (lower.contains("navid") || lower.contains("christmas")) {
+                prompt.append("THEME: Christmas — festive red/green, snowflakes, lights, warm holiday feeling. ");
+            } else if (lower.contains("halloween")) {
+                prompt.append("THEME: Halloween — orange/purple, pumpkins, bats, spooky but fun. ");
+            } else if (lower.contains("valent")) {
+                prompt.append("THEME: San Valentin — pink/red hearts, roses, romantic. ");
+            } else if (lower.contains("muerto")) {
+                prompt.append("THEME: Dia de Muertos — calaveras, marigolds, papel picado, orange/purple. ");
+            } else if (lower.contains("promo") || lower.contains("descuento") || lower.contains("2x1")) {
+                prompt.append("THEME: Sale/Promo — bold price tags, discount badges, urgency, bright colors. ");
+            } else if (lower.contains("año nuevo")) {
+                prompt.append("THEME: New Year — fireworks, gold, sparkles, celebration. ");
+            }
+
+            String textContext = generatedText.length() > 200
+                    ? generatedText.substring(0, 200)
                     : generatedText;
-            prompt.append("The overall mood and atmosphere should reflect this vibe: ").append(textContext)
-                    .append(". ");
+            prompt.append("Promotional context: ").append(textContext).append(". ");
         }
 
-        // Add visual style with specific lighting/composition instructions
+        // Style
         String stylePrompt = switch (style != null ? style.toLowerCase() : "moderno") {
-            case "minimalista" ->
-                "Minimalist composition, clean solid color background (like soft pastel or pure white), soft diffused studio lighting, sharp focus on the food, negative space, elegant and premium editorial look.";
-            case "vibrante" ->
-                "Vibrant pop-art aesthetic, contrasting bright neon background colors, hard directional flash lighting creating sharp shadows, energetic and bold composition, highly saturated colors.";
-            case "elegante" ->
-                "Luxurious dark moody food photography, dark textured wood or slate background, dramatic chiaroscuro lighting (single directional light), golden hour accents, high-end restaurant presentation.";
-            case "casual" ->
-                "Cozy and warm rustic table setting, natural window lighting, subtle hints of fresh ingredients scattered around, inviting and wholesome atmosphere, lifestyle food photography.";
-            case "promo" ->
-                "Eye-catching commercial advertising style, floating ingredients frozen in mid-air, splash effects, ultra-dynamic composition, vivid colors, bright and punchy lighting, cinematic masterpiece.";
-            default ->
-                "Modern trendy commercial food art, perfectly lit studio environment, highly appetizing and mouth-watering presentation, photorealistic, 8k resolution.";
+            case "minimalista" -> "Clean minimalist design, pastel colors, elegant typography.";
+            case "vibrante" -> "Bold vibrant colors, energetic, neon accents, dynamic layout.";
+            case "elegante" -> "Luxurious dark design, gold accents, sophisticated typography.";
+            case "casual" -> "Warm cozy aesthetic, natural tones, inviting feel.";
+            case "promo" -> "Bold sale design, red/yellow, large price tags, urgency.";
+            default -> "Modern trendy social media design, clean layout, professional branding.";
         };
 
         prompt.append(stylePrompt);
-        prompt.append(
-                " CRITICAL INSTRUCTION: Absolutely NO TEXT, NO WORDS, NO LETTERS, NO FONTS, NO WATERMARKS anywhere in the image. Pure visual photography only.");
+        prompt.append(" Make it appetizing, professional, square format for Instagram/Facebook.");
 
         return prompt.toString();
     }

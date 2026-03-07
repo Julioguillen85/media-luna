@@ -6,7 +6,8 @@ const NotificationContext = createContext();
 
 export function NotificationProvider({ children }) {
     const { user } = useAuth();
-    const [permission, setPermission] = useState(Notification.permission);
+    const isSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+    const [permission, setPermission] = useState(isSupported ? Notification.permission : 'denied');
 
     useEffect(() => {
         if (user && permission === 'default') {
@@ -15,10 +16,15 @@ export function NotificationProvider({ children }) {
     }, [user]); // Request when user logs in
 
     const requestPermission = async () => {
-        const result = await Notification.requestPermission();
-        setPermission(result);
-        if (result === 'granted') {
-            await notificationService.subscribeToPush();
+        if (!isSupported) return;
+        try {
+            const result = await Notification.requestPermission();
+            setPermission(result);
+            if (result === 'granted') {
+                await notificationService.subscribeToPush();
+            }
+        } catch (error) {
+            console.warn("Notifications not fully supported/allowed on this browser", error);
         }
     };
 

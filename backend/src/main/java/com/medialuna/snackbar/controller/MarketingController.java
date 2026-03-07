@@ -10,6 +10,7 @@ import com.medialuna.snackbar.service.SalesReportService;
 import com.medialuna.snackbar.service.SocialMediaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/marketing")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class MarketingController {
 
     @Autowired
@@ -264,15 +266,17 @@ public class MarketingController {
      * Accepts: product, style, generatedText (the AI-generated marketing text for
      * context)
      */
+    @SuppressWarnings("unchecked")
     @PostMapping("/generate-image")
-    public ResponseEntity<?> generateImage(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> generateImage(@RequestBody Map<String, Object> request) {
         try {
-            String product = request.getOrDefault("product", "");
-            String style = request.getOrDefault("style", "moderno");
-            String generatedText = request.get("generatedText");
+            String product = (String) request.getOrDefault("product", "");
+            String style = (String) request.getOrDefault("style", "moderno");
+            String generatedText = (String) request.get("generatedText");
+            List<String> images = (List<String>) request.get("images");
 
             String prompt = imageGenerationService.buildPromoPrompt(product, style, generatedText);
-            String imageData = imageGenerationService.generateImage(prompt);
+            String imageData = imageGenerationService.generateImageWithReferences(prompt, images);
 
             return ResponseEntity.ok(Map.of(
                     "imageUrl", imageData,

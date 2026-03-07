@@ -70,7 +70,7 @@ public class SalesReportService {
         weeklyOrders.forEach(order -> {
             if (order.getItems() != null) {
                 order.getItems().forEach(item -> {
-                    productCounts.merge(item.getName(), 1, Integer::sum);
+                    productCounts.merge(item.getName(), 1, (a, b) -> a + b);
                 });
             }
         });

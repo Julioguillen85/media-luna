@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Bot, Loader2 } from 'lucide-react';
+import { ShoppingCart, Bot, Loader2, MessageCircle } from 'lucide-react';
 import Navbar from './components/layout/Navbar';
 import HeroSection from './components/layout/HeroSection';
 import Footer from './components/layout/Footer';
@@ -15,12 +15,13 @@ import ToastNotification from './components/ui/ToastNotification';
 import EnhancedChatBot from './EnhancedChatBot';
 import CategoryToggle from './components/layout/CategoryToggle';
 import RentalProductCard from './components/rental/RentalProductCard';
-import CartSidebar from './components/cart/CartSidebar';
 import CheckoutForm from './components/cart/CheckoutForm';
 import CommunitySection from './components/community/CommunitySection';
+import SocialGallery from './components/community/SocialGallery';
 import MobileBottomNav from './components/layout/MobileBottomNav';
 import BulkOrderModal from './components/menu/BulkOrderModal';
 import DiscountTimer from './components/layout/DiscountTimer';
+import PWAInstallBanner from './components/layout/PWAInstallBanner';
 
 const DEMO_MODE = false;
 const API_URL = "/api";
@@ -32,8 +33,8 @@ const BACKUP_OPTIONS = {
   toppings: ["Manguitos", "Picafresas", "Lombrices", "Cacahuates", "Rellerindos", "Panditas", "Paletas", "Churro loko", "Sandías", "Lombrices ácidas", "Bolitochas de sandía", "Frutitas de gomita", "Tiburones de gomita", "Aros de durazno", "Cacahuate salado"]
 };
 
-export const CUSTOMIZABLE_IDS = [6];
-export const TRAY_IDS = [8];
+export const isCustomizable = (p) => p && (p.name || '').toLowerCase().includes('papas preparadas');
+export const isTray = (p) => p && (p.name || '').toLowerCase().includes('charola de snacks');
 
 const INITIAL_PRODUCTS = [
   { id: 6, name: "Papas Preparadas (Bowl)", category: "Snacks", desc: "Elige Tamaño (1/4 o 1/2) + Base + Complementos + Toppings.", keywords: ["papas", "bowl", "preparadas"], img: "/images/papas-preparadas.jpg", gallery: ["/images/papas-preparadas.jpg"] },
@@ -53,18 +54,24 @@ const INITIAL_PRODUCTS = [
   { id: 15, name: "Tablón", category: "Rentas", desc: "Mesa rectangular (2.40m) para 10 personas.", keywords: ["tablon", "mesa", "rectangular"], img: "/images/tablon.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 150 },
   { id: 16, name: "Tablón (Paquete)", category: "Rentas", desc: "Incluye tablón, mantel blanco y 10 sillas plegables.", keywords: ["tablon", "paquete", "sillas"], img: "/images/tablon.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 350 },
   { id: 17, name: "Brincolín", category: "Rentas", desc: "Brincolín inflable para niños (4x4m).", keywords: ["brincolin", "inflable", "juegos"], img: "/images/brincolin.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 600 },
+  { id: 18, name: "Brincolín Grande", category: "Rentas", desc: "Brincolín inflable grande (5x5m).", keywords: ["brincolin", "inflable", "grande", "juegos"], img: "/images/brincolin.jpg", gallery: [], productType: "RENTAL", rentalPricePerDay: 800 },
 ];
 const INITIAL_CATEGORIES = ["Snacks", "Bebidas", "Rentas"];
 
 import { useAuth } from './context/AuthContext';
 import { useNotification } from './context/NotificationContext';
 import { authService } from './services/authService';
+import { isDiscountActive } from './lunitaUtils';
 
 export default function App() {
-  const { user, login: authLogin, logout: authLogout } = useAuth();
+  const { user, login: authLogin, logout: authLogout, loading: authLoading } = useAuth();
   const { requestPermission } = useNotification();
 
-  const [view, setView] = useState('home');
+  const [view, setView] = useState(() => {
+    // If on /admin path and already authenticated, go straight to admin
+    if (window.location.pathname === '/admin') return 'home';
+    return 'home';
+  });
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [options, setOptions] = useState(BACKUP_OPTIONS);
@@ -101,7 +108,7 @@ export default function App() {
   };
 
   const [checkoutFormData, setCheckoutFormData] = useState({
-    name: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
+    name: '', email: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
   });
 
   const refreshData = () => {
@@ -135,11 +142,24 @@ export default function App() {
     }
   }, [isAdmin]);
 
+  // Auto-detect /admin path and show login or go to admin
+  useEffect(() => {
+    if (!authLoading && window.location.pathname === '/admin') {
+      if (user) {
+        setView('admin');
+        setShowLogin(false);
+      } else {
+        setShowLogin(true);
+      }
+    }
+  }, [authLoading, user]);
+
   const handleLogin = async (u, p) => {
     const success = await authLogin(u, p);
     if (success) {
       setShowLogin(false);
       setView('admin');
+      window.history.pushState({}, '', '/admin');
       showToast('Bienvenido Admin', 'success');
       // Request push permission after login
       requestPermission();
@@ -151,14 +171,15 @@ export default function App() {
   const handleLogout = () => {
     authLogout();
     setView('home');
+    window.history.pushState({}, '', '/');
     showToast('Sesión cerrada', 'info');
   };
 
   const handleProductClick = (product, openGallery = false) => {
-    if (openGallery && product.gallery && product.gallery.length > 0) { setGalleryImages(product.gallery); setGalleryModalOpen(true); return; }
+    if (openGallery) { const imgs = [product.img, ...(product.gallery || [])].filter(Boolean); if (imgs.length > 0) { setGalleryImages(imgs); setGalleryModalOpen(true); return; } }
     const inCart = cart.find(item => item.id === product.id);
-    if (inCart && !(CUSTOMIZABLE_IDS.includes(product.id) || TRAY_IDS.includes(product.id))) { removeFromCart(inCart.cartId); return; }
-    if (CUSTOMIZABLE_IDS.includes(product.id) || TRAY_IDS.includes(product.id)) { setProductToCustomize(product); setCustomModalOpen(true); }
+    if (inCart && !(isCustomizable(product) || isTray(product))) { removeFromCart(inCart.cartId); return; }
+    if (isCustomizable(product) || isTray(product)) { setProductToCustomize(product); setCustomModalOpen(true); }
     else if (product.category === 'Snacks' || product.category === 'Bebidas' || product.category === 'Rentas' || product.productType === 'RENTAL') {
       setProductForBulk({ product, customization: null });
       setBulkModalOpen(true);
@@ -335,15 +356,25 @@ export default function App() {
       setOrders(orders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
     } else {
       try {
-        await authService.fetch(`${API_URL}/orders/${orderId}/status`, {
+        const token = localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(`${API_URL}/orders/${orderId}/status`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ status: newStatus })
         });
+
+        if (!res.ok) {
+          console.error('Status update failed with HTTP', res.status);
+          return;
+        }
+
         setOrders(orders.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+        showToast(`Pedido #${orderId} actualizado a: ${newStatus}`, 'success');
       } catch (err) {
         console.error('Error updating order status:', err);
-        alert('Error al actualizar el estado');
       }
     }
   };
@@ -402,11 +433,26 @@ export default function App() {
   };
 
   const handleCheckoutSuccess = async () => {
+    // 1. Map items to enforce calculated bulk price over the $45 unit price base
+    const finalItems = cart.map(item => ({
+      ...item,
+      price: item.totalPrice || item.price,
+      quantity: item.quantity || 1
+    }));
+
+    // 2. Compute order total
+    const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+    const rawSubtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+    const discountApplies = isDiscountActive();
+    const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+    const finalTotal = rawSubtotal - discountAmount;
+
     // Create order object
     const newOrder = {
       ...checkoutFormData,
       customer: checkoutFormData.name,
-      items: cart,
+      total: finalTotal,
+      items: finalItems,
       status: 'PENDING',
       createdAt: new Date().toISOString()
     };
@@ -423,6 +469,9 @@ export default function App() {
         setOrders(prev => [...prev, savedOrder]);
         // Update newOrder with the ID from the backend so the confirmation view has it
         newOrder.id = savedOrder.id;
+        if (savedOrder.paymentLink) {
+          newOrder.paymentLink = savedOrder.paymentLink;
+        }
       } catch (err) {
         console.error("Error saving order:", err);
       }
@@ -434,7 +483,7 @@ export default function App() {
     setIsCheckoutModalOpen(false);
     setCart([]);
     setCheckoutFormData({
-      name: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
+      name: '', email: '', phone: '', date: new Date().toISOString().split('T')[0], time: '16:00', eventLocation: ''
     });
   };
 
@@ -449,100 +498,94 @@ export default function App() {
 
       <Navbar setView={setView} cart={cart} isAdmin={isAdmin} setIsAdmin={setIsAdmin} setShowLogin={setShowLogin} view={view} setIsCartModalOpen={setIsCartModalOpen} onLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-      <main className="flex-grow max-w-6xl mx-auto px-4 py-8 relative z-10 w-full">
+      {view === 'home' && (
+        <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} />
+      )}
+
+      <main className={`flex-grow ${view === 'admin' ? 'w-full !p-0 !m-0 max-w-none' : 'max-w-6xl mx-auto px-4 py-8 relative'} z-10 w-full`}>
         {loading && <div className="fixed inset-0 bg-white/80 z-[60] flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-rose-500 mb-2" size={48} /></div>}
 
         {view === 'home' && (
           <>
-            <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} />
             <DiscountTimer />
 
             {/* Filtered Products for Customer View */}
             {(() => {
               const visibleProducts = products.filter(p => p.visible !== false);
               return (
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Main Content Area (Products) */}
-                  <div className="lg:col-span-2 space-y-8">
-                    <CategoryToggle activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+                <div className="mt-8">
+                  <CategoryToggle activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
 
-                    {activeCategory === 'snacks' || activeCategory === 'drinks' ? (
-                      <ProductGrid
-                        products={visibleProducts.filter(p => p.productType === 'SNACK' || !p.productType)}
-                        categories={activeCategory === 'snacks' ? ['Snacks'] : ['Bebidas']}
-                        cart={cart}
-                        onProductClick={handleProductClick} removeFromCart={removeFromCart}
-                        CUSTOMIZABLE_IDS={CUSTOMIZABLE_IDS}
-                        TRAY_IDS={TRAY_IDS}
-                      />
-                    ) : (
-                      <ProductGrid
-                        products={visibleProducts.filter(p => p.productType === 'RENTAL' || p.category?.includes('Renta')).map(p => ({ ...p, category: 'Rentas' }))}
-                        categories={['Rentas']}
-                        cart={cart}
-                        onProductClick={handleProductClick} removeFromCart={removeFromCart}
-                        CUSTOMIZABLE_IDS={CUSTOMIZABLE_IDS}
-                        TRAY_IDS={TRAY_IDS}
-                      />
-                    )}
+                  <div className="mt-8 relative">
+                    {/* Main Content Area (Products) */}
+                    <div className="w-full space-y-8">
+                      {activeCategory === 'snacks' || activeCategory === 'drinks' ? (
+                        <ProductGrid
+                          products={visibleProducts.filter(p => p.productType === 'SNACK' || !p.productType)}
+                          categories={activeCategory === 'snacks' ? ['Snacks'] : ['Bebidas']}
+                          cart={cart}
+                          onProductClick={handleProductClick} removeFromCart={removeFromCart}
+                          activeCategory={activeCategory} setActiveCategory={setActiveCategory}
+                        />
+                      ) : (
+                        <ProductGrid
+                          products={visibleProducts.filter(p => p.productType === 'RENTAL' || p.category?.includes('Renta')).map(p => ({ ...p, category: 'Rentas' }))}
+                          categories={['Rentas']}
+                          cart={cart}
+                          onProductClick={handleProductClick} removeFromCart={removeFromCart}
+                          activeCategory={activeCategory} setActiveCategory={setActiveCategory}
+                        />
+                      )}
+                    </div>
                   </div>
-
-                  {/* Sidebar: Cart & Request Form (Static) */}
-                  <div className="lg:col-span-1">
-                    <CartSidebar
-                      cart={cart}
-                      removeFromCart={(id) => removeFromCart(id)}
-                      openBot={() => setIsBotOpen(true)}
-                      onCheckout={() => {
-                        if (window.innerWidth < 1024) {
-                          setIsCartModalOpen(false);
-                          setIsCheckoutModalOpen(true);
-                        } else {
-                          setIsCheckoutModalOpen(true);
-                        }
-                      }}
-                    />
+                  <div className="mt-8 animate-fade-in space-y-8">
+                    <SocialGallery />
                     <CommunitySection />
                   </div>
                 </div>
               );
             })()}
           </>
-        )}
+        )
+        }
 
         {view === 'confirmation' && lastOrder && <ConfirmationView order={lastOrder} onBack={() => setView('home')} />}
 
         {view === 'admin' && isAdmin && (
-          <AdminDashboard
-            products={products}
-            categories={categories}
-            orders={orders}
-            options={options}
-            onSaveProduct={handleSaveProduct}
-            onDeleteProduct={handleDeleteProduct}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
-            onDeleteOrder={handleDeleteOrder}
-            onSaveOptions={handleSaveOptions}
-            onSaveInventory={handleSaveInventory}
-            onLogout={handleLogout}
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-          />
+          <div className="w-full h-full">
+            <AdminDashboard
+              products={products}
+              categories={categories}
+              orders={orders}
+              options={options}
+              onSaveProduct={handleSaveProduct}
+              onDeleteProduct={handleDeleteProduct}
+              onUpdateOrderStatus={handleUpdateOrderStatus}
+              onDeleteOrder={handleDeleteOrder}
+              onSaveOptions={handleSaveOptions}
+              onSaveInventory={handleSaveInventory}
+              onLogout={handleLogout}
+              isSidebarOpen={isSidebarOpen}
+              setIsSidebarOpen={setIsSidebarOpen}
+              setView={setView}
+            />
+          </div>
         )}
       </main>
 
-      <Footer />
+      {view !== 'admin' && <Footer />}
 
       {/* Floating Buttons */}
       {cart.length > 0 && (
         <button onClick={() => setIsCartModalOpen(true)} className="fixed max-md:bottom-[96px] md:bottom-6 right-6 z-40 bg-gradient-to-r from-rose-500 to-rose-600 text-white p-4 rounded-full shadow-2xl hover:shadow-rose-300 transition-all hover:scale-110 active:scale-95">
-          <ShoppingBag size={24} />
+          <ShoppingCart size={24} />
           <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-pulse">{cart.length}</span>
         </button>
       )}
 
+
       {view !== 'admin' && !isBotOpen && (
-        <div className={`fixed z-40 transition-all duration-500 ease-in-out right-6 ${cart.length > 0 ? 'max-md:bottom-[170px] md:bottom-28' : 'max-md:bottom-[96px] md:bottom-6'}`}>
+        <div className={`fixed z-40 transition-all duration-500 ease-in-out right-10 ${cart.length > 0 ? 'max-md:bottom-[170px] md:bottom-28' : 'max-md:bottom-[96px] md:bottom-6'}`}>
           <button onClick={() => setIsBotOpen(true)} className="bg-slate-900 dark:bg-black text-white p-3 md:p-4 rounded-full shadow-2xl hover:shadow-rose-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center relative animate-shake">
             {/* Tooltip flotante con fondo transparente */}
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-800 dark:text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 cursor-pointer whitespace-nowrap">
@@ -667,7 +710,7 @@ export default function App() {
       )}
 
       {view !== 'admin' && (
-        <MobileBottomNav activeCategory={activeCategory} setActiveCategory={setActiveCategory} isBotOpen={isBotOpen} />
+        <MobileBottomNav activeCategory={activeCategory} setActiveCategory={setActiveCategory} isBotOpen={isBotOpen} products={products} onProductClick={handleProductClick} />
       )}
     </div>
   );

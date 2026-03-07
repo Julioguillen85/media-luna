@@ -1,4 +1,5 @@
 package com.medialuna.snackbar.model;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -7,10 +8,10 @@ import java.util.List;
 @Data
 public class Customization {
     private String size;
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> bases;
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> complements;
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> toppings;
 }

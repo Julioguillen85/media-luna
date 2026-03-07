@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertCircle } from 'lucide-react';
+import { Clock, Scissors, CalendarDays, Sparkles, AlertCircle } from 'lucide-react';
+import { isDiscountActive } from '../../lunitaUtils';
 
 export default function DiscountTimer() {
+    // If we're out of bounds (10 PM to 8 AM), just disappear entirely.
+    if (!isDiscountActive()) return null;
+
     const [timeLeft, setTimeLeft] = useState('');
     const [isActive, setIsActive] = useState(false);
     const [showExpiredMessage, setShowExpiredMessage] = useState(false);
@@ -13,16 +17,16 @@ export default function DiscountTimer() {
             const currentMinute = now.getMinutes();
             const currentSecond = now.getSeconds();
 
-            // Active window: 8:00 AM (8) to 7:59:59 PM (19). Ends exactly at 20:00:00 (8:00 PM)
-            const isWindowActive = currentHour >= 8 && currentHour < 20;
+            // Active window: 8:00 AM (8) to 8:59:59 PM (20). Ends exactly at 21:00:00 (9:00 PM)
+            const isWindowActive = currentHour >= 8 && currentHour < 21;
 
-            // Post-window expiration message: 8:00 PM (20) to 9:59:59 PM (21). Turns off at 22:00:00 (10:00 PM).
-            const isWindowExpired = currentHour >= 20 && currentHour < 22;
+            // Post-window expiration message: 9:00 PM (21) to 10:59:59 PM (22). Turns off at 23:00:00 (11:00 PM).
+            const isWindowExpired = currentHour >= 21 && currentHour < 23;
 
             if (isWindowActive) {
-                // Calculate time remaining until 20:00:00 (8:00 PM) today
+                // Calculate time remaining until 21:00:00 (9:00 PM) today
                 const endDate = new Date(now);
-                endDate.setHours(20, 0, 0, 0);
+                endDate.setHours(21, 0, 0, 0);
 
                 const difference = endDate - now;
 
@@ -42,7 +46,7 @@ export default function DiscountTimer() {
                 setIsActive(false);
                 setShowExpiredMessage(true);
             } else {
-                // Before 8 AM or after 10 PM -> Hide everything
+                // Before 8 AM or after 11 PM -> Hide everything
                 setIsActive(false);
                 setShowExpiredMessage(false);
             }
@@ -57,11 +61,11 @@ export default function DiscountTimer() {
         return () => clearInterval(timer);
     }, []);
 
-    // If completely inactive (before 8 AM or after 8 PM), render nothing
+    // If completely inactive (before 8 AM or after 11 PM), render nothing
     if (!isActive && !showExpiredMessage) return null;
 
     return (
-        <div className="w-full max-w-4xl mx-auto my-6 px-4 animate-fade-in">
+        <div className="w-full mx-auto mt-6 mb-8 animate-fade-in">
             {isActive ? (
                 <div className="bg-gradient-to-r from-rose-500 via-rose-600 to-amber-500 rounded-2xl p-4 shadow-lg shadow-rose-200/50 flex flex-col md:flex-row items-center justify-between text-white border border-rose-400/30">
                     <div className="flex items-center gap-3 mb-3 md:mb-0">

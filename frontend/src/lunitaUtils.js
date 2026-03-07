@@ -2,6 +2,11 @@
 // LUNITA IA - NATURAL LANGUAGE PROCESSING
 // ============================================
 
+export const isDiscountActive = () => {
+    const h = new Date().getHours();
+    return h >= 8 && h < 22;
+};
+
 // Normalizar texto (quitar acentos y convertir a minúsculas)
 export const normalize = (str) =>
     str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -119,7 +124,6 @@ export const INTENT_PATTERNS = {
             /ser[ií]a.*todo/i,
             /ya est[aá]/i,
             /as[ií].*bien/i,
-            /gracias.*todo/i,
             /nada m[aá]s/i
         ]
     },

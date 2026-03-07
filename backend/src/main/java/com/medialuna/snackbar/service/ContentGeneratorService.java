@@ -10,7 +10,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class ContentGeneratorService {
 
@@ -236,7 +238,7 @@ public class ContentGeneratorService {
             }
             return "No se pudo generar el contenido. Intenta de nuevo.";
         } catch (Exception e) {
-            System.err.println("Error generando contenido con IA: " + e.getMessage());
+            log.error("Error generando contenido con IA", e);
             return "Error al generar contenido: " + e.getMessage();
         }
     }
