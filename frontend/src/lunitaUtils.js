@@ -2,6 +2,11 @@
 // LUNITA IA - NATURAL LANGUAGE PROCESSING
 // ============================================
 
+export const isDiscountActive = () => {
+    const h = new Date().getHours();
+    return h >= 8 && h < 22;
+};
+
 // Normalizar texto (quitar acentos y convertir a minúsculas)
 export const normalize = (str) =>
     str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -17,7 +22,7 @@ export const INTENT_PATTERNS = {
     },
 
     event_context: {
-        keywords: ["boda", "fiesta", "evento", "cumpleaños", "reunión", "celebración", "XV años", "quince años"],
+        keywords: ["boda", "fiesta", "evento", "cumpleaños", "reunión", "celebración", "XV años", "quince años", "renta", "alquiler", "mobiliario"],
         phrases: [
             /para.*boda/i,
             /para.*fiesta/i,
@@ -26,7 +31,10 @@ export const INTENT_PATTERNS = {
             /tengo.*boda/i,
             /tengo.*fiesta/i,
             /XV.*a[ñn]os/i,
-            /quince.*a[ñn]os/i
+            /quince.*a[ñn]os/i,
+            /renta.*sillas/i,
+            /alquiler.*mesas/i,
+            /cotiza.*mobiliario/i
         ]
     },
 
@@ -116,7 +124,6 @@ export const INTENT_PATTERNS = {
             /ser[ií]a.*todo/i,
             /ya est[aá]/i,
             /as[ií].*bien/i,
-            /gracias.*todo/i,
             /nada m[aá]s/i
         ]
     },
@@ -139,9 +146,9 @@ export const RESPONSES = {
     ],
 
     event_context: [
-        "¡Qué emoción! 🎉 Perfecto, te ayudo a armar el pedido para tu evento. ¿Qué se te antoja que llevemos?",
-        "¡Genial! Me late ayudarte con eso 😊 ¿Qué productos te gustaría cotizar?",
-        "¡Claro que sí! 🌙 Cuéntame, ¿qué se te antoja para tu celebración?"
+        "¡Qué emoción! 🎉 Perfecto, te ayudo a armar el pedido para tu evento. Tenemos snacks y mobiliario. ¿Qué necesitas?",
+        "¡Genial! Me late ayudarte con eso 😊 ¿Buscas snacks, mobiliario o ambos?",
+        "¡Claro que sí! 🌙 Cuéntame, ¿qué se te antoja o qué muebles necesitas para tu celebración?"
     ],
 
     ask_recommendation: [
@@ -265,6 +272,13 @@ export const detectIntent = (text, products) => {
         return { product: p, score };
     });
 
+    // Detectar cantidades explícitas (e.g. "10 sillas", "2 tablones")
+    const quantityMatch = text.match(/(\d+)\s+(.*?)/);
+    let detectedQuantity = 1;
+    if (quantityMatch) {
+        detectedQuantity = parseInt(quantityMatch[1]);
+    }
+
     // Filtrar solo productos con algún score y ordenar por score descendente
     const matched = productScores
         .filter(ps => ps.score > 0)
@@ -272,7 +286,7 @@ export const detectIntent = (text, products) => {
         .map(ps => ps.product);
 
     if (matched.length > 0) {
-        return { type: 'order_product', products: matched };
+        return { type: 'order_product', products: matched, quantity: detectedQuantity };
     }
 
     return 'unknown';
