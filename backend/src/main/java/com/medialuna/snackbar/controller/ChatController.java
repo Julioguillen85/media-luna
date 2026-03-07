@@ -6,10 +6,12 @@ import com.medialuna.snackbar.service.GroqService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/chat")
 public class ChatController {
@@ -23,9 +25,11 @@ public class ChatController {
      */
     @PostMapping
     public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
+        log.info("Received chat request");
         try {
             // Validar request
             if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
+                log.warn("Invalid chat request: empty message");
                 return ResponseEntity.badRequest()
                         .body(new ChatResponse("Por favor envía un mensaje válido"));
             }
@@ -51,11 +55,11 @@ public class ChatController {
                 response.setData(data);
             }
 
+            log.info("Successfully generated chat response with action: {}", action);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.err.println("Error en /api/chat: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error en /api/chat: ", e);
 
             // Respuesta de fallback en caso de error
             return ResponseEntity.status(500)
