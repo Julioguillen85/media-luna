@@ -1,4 +1,5 @@
 package com.medialuna.snackbar.model;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ public class OrderItem {
     private Long productId;
     private String name;
     private Double price;
+    private Integer quantity;
     @Embedded
     private Customization customization;
 }

@@ -10,7 +10,8 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const token = authService.getToken();
         if (token) {
-            setUser({ token }); // In real app, decode token to get user info
+            const decoded = authService.decodeToken(token);
+            setUser({ token, role: decoded?.role || 'ROLE_ADMIN' });
         }
         setLoading(false);
     }, []);
@@ -18,7 +19,8 @@ export function AuthProvider({ children }) {
     const login = async (username, password) => {
         try {
             const token = await authService.login(username, password);
-            setUser({ token });
+            const decoded = authService.decodeToken(token);
+            setUser({ token, role: decoded?.role || 'ROLE_ADMIN' });
             return true;
         } catch (error) {
             console.error(error);

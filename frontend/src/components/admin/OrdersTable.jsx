@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
-import { Package, User, Phone, MapPin, Calendar, Clock, Users, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Package, User, Phone, MapPin, Calendar, Clock, ChevronDown, ChevronUp, Trash2, Mail, MessageCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder }) {
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [filterStatus, setFilterStatus] = useState('ALL');
+    const [sortOrder, setSortOrder] = useState('DESC');
     const itemsPerPage = 6;
+
+    const { user } = useAuth();
+    const isAssistant = user?.role === 'ROLE_ASSISTANT';
 
     const toggleExpand = (orderId) => {
         setExpandedOrder(expandedOrder === orderId ? null : orderId);
@@ -41,14 +47,61 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
         );
     }
 
+    // Filter and Sort logic
+    const filteredAndSortedOrders = [...orders]
+        .filter(order => filterStatus === 'ALL' || order.status === filterStatus)
+        .sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0).getTime();
+            const dateB = new Date(b.createdAt || 0).getTime();
+            // Fallback to ID sorting if dates are not present or identical
+            if (dateA === dateB) {
+                return sortOrder === 'DESC' ? b.id - a.id : a.id - b.id;
+            }
+            return sortOrder === 'DESC' ? dateB - dateA : dateA - dateB;
+        });
+
     // Pagination logic
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentOrders = orders.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(orders.length / itemsPerPage);
+    const currentOrders = filteredAndSortedOrders.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredAndSortedOrders.length / itemsPerPage);
 
     return (
         <>
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                <div className="flex-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">Filtrar por Estado</label>
+                    <div className="relative">
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}
+                            className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400 transition-all cursor-pointer"
+                        >
+                            <option value="ALL">Todos los Estados</option>
+                            <option value="PENDING">Pendientes</option>
+                            <option value="CONFIRMED">Confirmados</option>
+                            <option value="COMPLETED">Completados</option>
+                            <option value="CANCELLED">Cancelados</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
+                <div className="flex-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block">Ordenar por Fecha</label>
+                    <div className="relative">
+                        <select
+                            value={sortOrder}
+                            onChange={(e) => { setSortOrder(e.target.value); setCurrentPage(1); }}
+                            className="w-full appearance-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-400 transition-all cursor-pointer"
+                        >
+                            <option value="DESC">Más recientes primero</option>
+                            <option value="ASC">Más antiguos primero</option>
+                        </select>
+                        <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                </div>
+            </div>
+
             <div className="space-y-4">
                 {currentOrders.map(order => (
                     <div key={order.id} className="bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden transition-colors duration-300">
@@ -88,13 +141,13 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
                                         <Phone size={16} className="text-slate-400 dark:text-slate-500 transition-colors duration-300" />
                                         <span className="text-slate-600 dark:text-slate-300 transition-colors duration-300">{order.phone}</span>
                                     </div>
+                                    <div className="flex items-center gap-2 text-sm md:col-span-2">
+                                        <Mail size={16} className="text-slate-400 dark:text-slate-500 transition-colors duration-300" />
+                                        <span className="text-slate-600 dark:text-slate-300 transition-colors duration-300">{order.email || 'Sin correo asociado'}</span>
+                                    </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         <MapPin size={16} className="text-slate-400 dark:text-slate-500 transition-colors duration-300" />
                                         <span className="text-slate-600 dark:text-slate-300 transition-colors duration-300">{order.eventLocation}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <Users size={16} className="text-slate-400 dark:text-slate-500 transition-colors duration-300" />
-                                        <span className="text-slate-600 dark:text-slate-300 transition-colors duration-300">{order.peopleCount} personas</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
                                         <Calendar size={16} className="text-slate-400 dark:text-slate-500 transition-colors duration-300" />
@@ -112,15 +165,28 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
                                     <div className="space-y-2">
                                         {order.items?.map((item, idx) => (
                                             <div key={idx} className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
-                                                <div className="font-medium text-slate-900 dark:text-white text-sm mb-1 transition-colors duration-300">{item.name}</div>
-                                                {item.customization && (
-                                                    <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1 transition-colors duration-300">
-                                                        <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Tamaño:</strong> {item.customization.size === 'quarter' ? 'Bowl 1/4' : 'Bowl 1/2'}</p>
-                                                        <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Bases:</strong> {item.customization.bases?.join(', ')}</p>
-                                                        <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Complementos:</strong> {item.customization.complements?.join(', ')}</p>
-                                                        <p><strong className="text-slate-700 dark:text-slate-300 transition-colors duration-300">Toppings:</strong> {item.customization.toppings?.join(', ')}</p>
-                                                    </div>
-                                                )}
+                                                <div className="font-medium text-slate-900 dark:text-white text-sm mb-1 transition-colors duration-300">
+                                                    {item.name}
+                                                    {item.quantity > 0 && <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">(Para {item.quantity} personas)</span>}
+                                                </div>
+                                                {item.customization && (() => {
+                                                    const isPapas = item.name?.toLowerCase().includes('papas preparadas');
+                                                    const isCharola = item.name?.toLowerCase().includes('charola');
+                                                    if (!isPapas && !isCharola) return null;
+                                                    const hasBases = item.customization.bases?.length > 0;
+                                                    const hasComplements = item.customization.complements?.length > 0;
+                                                    const hasToppings = item.customization.toppings?.length > 0;
+                                                    return (
+                                                        <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1 transition-colors duration-300">
+                                                            {isPapas && item.customization.size && (
+                                                                <p><strong className="text-slate-700 dark:text-slate-300">Tamaño:</strong> {item.customization.size === 'quarter' ? 'Bowl 1/4' : 'Bowl 1/2'}</p>
+                                                            )}
+                                                            {hasBases && <p><strong className="text-slate-700 dark:text-slate-300">Bases:</strong> {item.customization.bases.join(', ')}</p>}
+                                                            {hasComplements && <p><strong className="text-slate-700 dark:text-slate-300">Complementos:</strong> {item.customization.complements.join(', ')}</p>}
+                                                            {hasToppings && <p><strong className="text-slate-700 dark:text-slate-300">Toppings:</strong> {item.customization.toppings.join(', ')}</p>}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         ))}
                                     </div>
@@ -138,12 +204,25 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
                                         <option value="COMPLETED">Completado</option>
                                         <option value="CANCELLED">Cancelado</option>
                                     </select>
-                                    <button
-                                        onClick={() => onDeleteOrder(order.id)}
-                                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-300"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    {order.phone && (
+                                        <a
+                                            href={`https://wa.me/${order.phone.replace(/[^0-9]/g, '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors duration-300"
+                                            title="Enviar WhatsApp al cliente"
+                                        >
+                                            <MessageCircle size={18} />
+                                        </a>
+                                    )}
+                                    {!isAssistant && (
+                                        <button
+                                            onClick={() => onDeleteOrder(order.id)}
+                                            className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-300"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -155,7 +234,7 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
             {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 transition-colors duration-300">
                     <p className="text-sm text-slate-600 dark:text-slate-400 transition-colors duration-300">
-                        Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, orders.length)} de {orders.length}
+                        Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, filteredAndSortedOrders.length)} de {filteredAndSortedOrders.length}
                     </p>
                     <div className="flex gap-2">
                         <button

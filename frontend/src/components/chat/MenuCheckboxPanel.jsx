@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, ChevronDown, ChevronUp } from 'lucide-react';
+import { ShoppingCart, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
  * Interactive checkbox menu panel for the chat.
@@ -91,7 +91,7 @@ export default function MenuCheckboxPanel({ products, onConfirm }) {
                     disabled={selectedCount === 0}
                     className="w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700 text-white text-xs font-semibold py-2 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-md hover:shadow-rose-200 dark:hover:shadow-rose-900/50 transition-all active:scale-95"
                 >
-                    <ShoppingBag size={13} />
+                    <ShoppingCart size={13} />
                     {selectedCount > 0
                         ? `Agregar ${selectedCount} producto${selectedCount > 1 ? 's' : ''}`
                         : 'Elige algo primero'}

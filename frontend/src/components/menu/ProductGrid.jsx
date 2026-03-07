@@ -1,6 +1,8 @@
 import React from 'react';
-import { ShoppingBag, Sparkles, Utensils, CupSoda, CheckCircle, Bot, MapPin, Image as ImageIcon } from 'lucide-react';
+import { ShoppingCart, Sparkles, Utensils, CupSoda, CheckCircle, Bot, MapPin, Image as ImageIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
+
+const CATEGORIES = ['snacks', 'drinks', 'rental'];
 
 export default function ProductGrid({
     products,
@@ -8,8 +10,8 @@ export default function ProductGrid({
     cart,
     onProductClick,
     removeFromCart,
-    CUSTOMIZABLE_IDS,
-    TRAY_IDS
+    activeCategory,
+    setActiveCategory
 }) {
     return (
         <div className="space-y-10">
@@ -27,7 +29,6 @@ export default function ProductGrid({
                             if (!isPrimaryA && isPrimaryB) return 1;
 
                             if (isPrimaryA && isPrimaryB) {
-                                // Put Papas (6) before Elote (4)
                                 if (a.id === 6 && b.id === 4) return -1;
                                 if (a.id === 4 && b.id === 6) return 1;
                             }
@@ -48,7 +49,7 @@ export default function ProductGrid({
                                 <div className="h-[1px] flex-1 bg-gradient-to-r from-rose-200 via-slate-200 to-transparent dark:from-rose-900/50 dark:via-slate-800 dark:to-transparent ml-4 transition-colors duration-300" />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 xl:gap-6">
                                 {catProducts.map(product => (
                                     <ProductCard
                                         key={product.id}
@@ -56,8 +57,6 @@ export default function ProductGrid({
                                         cart={cart}
                                         onProductClick={onProductClick}
                                         removeFromCart={removeFromCart}
-                                        CUSTOMIZABLE_IDS={CUSTOMIZABLE_IDS}
-                                        TRAY_IDS={TRAY_IDS}
                                     />
                                 ))}
                             </div>

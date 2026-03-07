@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Plus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
+import { X, Save, Plus, Camera, Trash2 } from 'lucide-react';
+
+const API_URL = '/api';
 
 export default function ProductFormModal({ product, categories, onClose, onSave }) {
     const [formData, setFormData] = useState({
@@ -8,8 +11,15 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
         price: '',
         description: '',
         img: '',
-        customizable: false
+        gallery: [],
+        customizable: false,
+        productType: 'SNACK',
+        rentalPricePerDay: '',
+        specifications: {}
     });
+    const [uploading, setUploading] = useState(false);
+    const [activeTab, setActiveTab] = useState('info');
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (product) {
@@ -19,7 +29,6 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                     ? JSON.parse(product.specifications)
                     : (product.specifications || {});
             } catch (e) {
-                console.error("Error parsing specifications JSON", e);
                 parsedSpecs = {};
             }
 
@@ -29,6 +38,7 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                 price: product.price || '',
                 description: product.description || product.desc || '',
                 img: product.img || '',
+                gallery: product.gallery || [],
                 customizable: product.customizable || false,
                 productType: product.productType || 'SNACK',
                 rentalPricePerDay: product.rentalPricePerDay || '',
@@ -37,207 +47,367 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
         }
     }, [product, categories]);
 
+    const uploadFile = async (file) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: fd });
+        if (!res.ok) throw new Error('Upload failed');
+        const data = await res.json();
+        return data.url;
+    };
+
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        // Reset input so same file can be re-selected
+        e.target.value = '';
+
+        const currentImages = [formData.img, ...(formData.gallery || [])].filter(Boolean);
+        const slotsAvailable = 5 - currentImages.length;
+        if (slotsAvailable <= 0) return;
+
+        setUploading(true);
+        try {
+            const filesToUpload = files.slice(0, slotsAvailable);
+            const uploadedUrls = [];
+            for (const file of filesToUpload) {
+                const url = await uploadFile(file);
+                uploadedUrls.push(url);
+            }
+
+            // Batch update all uploaded URLs at once
+            setFormData(prev => {
+                const existing = [prev.img, ...(prev.gallery || [])].filter(Boolean);
+                const allImages = [...existing, ...uploadedUrls];
+                return {
+                    ...prev,
+                    img: allImages[0] || '',
+                    gallery: allImages.slice(1)
+                };
+            });
+        } catch (err) {
+            console.error('Error uploading:', err);
+            alert('Error al subir la imagen. Intenta de nuevo.');
+        }
+        setUploading(false);
+    };
+
+    const removeImage = (indexToRemove) => {
+        setFormData(prev => {
+            const allImages = [prev.img, ...(prev.gallery || [])].filter(Boolean);
+            allImages.splice(indexToRemove, 1);
+            return {
+                ...prev,
+                img: allImages[0] || '',
+                gallery: allImages.slice(1)
+            };
+        });
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        const submissionData = {
+        onSave({
             ...(product || {}),
             ...formData,
             specifications: JSON.stringify(formData.specifications)
-        };
-        onSave(submissionData);
+        });
     };
 
-    return (
-        <div className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in transition-colors duration-300">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-2xl dark:shadow-rose-900/20 flex flex-col max-h-[90vh] transition-colors duration-300">
-                <div className="p-5 border-b dark:border-slate-800/50 flex justify-between items-center transition-colors duration-300">
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white transition-colors duration-300">{product ? 'Editar Producto' : 'Nuevo Producto'}</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors duration-300">
-                        <X size={20} className="text-slate-500 dark:text-slate-400" />
+    const allImages = [formData.img, ...(formData.gallery || [])].filter(Boolean);
+
+    return ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+            <div
+                className="bg-white dark:bg-slate-900 w-full max-h-[80vh] sm:max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* ── Header ── */}
+                <div className="px-5 pt-5 pb-3 flex justify-between items-start shrink-0">
+                    <div>
+                        <h3 className="font-extrabold text-xl text-slate-900 dark:text-white">
+                            {product ? '✏️ Editar' : '➕ Nuevo'}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                            {product ? product.name : 'Crea un nuevo producto'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 -mr-2 -mt-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                    >
+                        <X size={22} className="text-slate-400" />
                     </button>
                 </div>
-                <div className="p-6 overflow-y-auto custom-scrollbar">
+
+                {/* ── Tabs ── */}
+                <div className="flex gap-1 px-5 pb-3 shrink-0">
+                    {[
+                        { id: 'info', label: 'Información' },
+                        { id: 'photos', label: `Fotos (${allImages.length})` },
+                        ...(formData.productType === 'RENTAL' ? [{ id: 'rental', label: 'Renta' }] : [])
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === tab.id
+                                ? 'bg-slate-900 dark:bg-rose-600 text-white shadow-md'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* ── Body ── */}
+                <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-5">
                     <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
-                        {/* Product Type Selector */}
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">Tipo de Producto</label>
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, productType: 'SNACK' })}
-                                    className={`flex-1 py-2 px-4 rounded-xl font-bold border-2 transition-colors duration-300 ${formData.productType === 'SNACK' ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' : 'border-slate-100 dark:border-slate-700 text-slate-400 hover:border-slate-200 dark:hover:border-slate-600'}`}
-                                >
-                                    🍿 Snack
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, productType: 'RENTAL' })}
-                                    className={`flex-1 py-2 px-4 rounded-xl font-bold border-2 transition-colors duration-300 ${formData.productType === 'RENTAL' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'border-slate-100 dark:border-slate-700 text-slate-400 hover:border-slate-200 dark:hover:border-slate-600'}`}
-                                >
-                                    🪑 Renta
-                                </button>
-                            </div>
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">Nombre</label>
-                            <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors duration-300" />
-                        </div>
+                        {/* ════ TAB: INFO ════ */}
+                        {activeTab === 'info' && (
+                            <>
+                                {/* Type */}
+                                <div className="flex gap-2">
+                                    <button type="button" onClick={() => setFormData({ ...formData, productType: 'SNACK' })}
+                                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${formData.productType === 'SNACK' ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`}>
+                                        🍿 Snack
+                                    </button>
+                                    <button type="button" onClick={() => setFormData({ ...formData, productType: 'RENTAL' })}
+                                        className={`flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${formData.productType === 'RENTAL' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'border-slate-200 dark:border-slate-700 text-slate-400'}`}>
+                                        🪑 Renta
+                                    </button>
+                                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">Categoría</label>
-                                <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors duration-300">
-                                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                                    {/* Add generic rental category if not present */}
-                                    {formData.productType === 'RENTAL' && !categories.includes('Mobiliario') && <option value="Mobiliario">Mobiliario</option>}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">
-                                    {formData.productType === 'RENTAL' ? 'Precio de Renta (x día)' : 'Precio'}
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.50"
-                                    required
-                                    value={formData.productType === 'RENTAL' ? formData.rentalPricePerDay : formData.price}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (formData.productType === 'RENTAL') {
-                                            setFormData({ ...formData, rentalPricePerDay: val, price: val });
-                                        } else {
-                                            setFormData({ ...formData, price: val });
-                                        }
-                                    }}
-                                    className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors duration-300"
-                                />
-                            </div>
-                        </div>
+                                {/* Name */}
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Nombre</label>
+                                    <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:border-rose-400 focus:ring-2 focus:ring-rose-100 dark:focus:ring-rose-900/30 transition-all" />
+                                </div>
 
-                        {/* Rental Specifications */}
-                        {formData.productType === 'RENTAL' && (
-                            <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 space-y-3 transition-colors duration-300">
-                                <h4 className="font-bold text-blue-800 dark:text-blue-400 text-sm transition-colors duration-300">Especificaciones de Renta</h4>
+                                {/* Category + Price */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-bold text-blue-700 dark:text-blue-500 mb-1 transition-colors duration-300">Capacidad (Personas)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.specifications?.capacity || ''}
-                                            onChange={e => setFormData({
-                                                ...formData,
-                                                specifications: { ...formData.specifications, capacity: e.target.value }
-                                            })}
-                                            placeholder="Ej. 10"
-                                            className="w-full p-2 border border-blue-200 dark:border-blue-800/50 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors duration-300"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Categoría</label>
+                                        <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:border-rose-400 transition-all">
+                                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                            {formData.productType === 'RENTAL' && !categories.includes('Mobiliario') && <option value="Mobiliario">Mobiliario</option>}
+                                        </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-blue-700 dark:text-blue-500 mb-1 transition-colors duration-300">Material</label>
-                                        <input
-                                            type="text"
-                                            value={formData.specifications?.material || ''}
-                                            onChange={e => setFormData({
-                                                ...formData,
-                                                specifications: { ...formData.specifications, material: e.target.value }
-                                            })}
-                                            placeholder="Ej. Plástico, Madera"
-                                            className="w-full p-2 border border-blue-200 dark:border-blue-800/50 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors duration-300"
-                                        />
+                                        <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">
+                                            {formData.productType === 'RENTAL' ? 'Precio/Día' : 'Precio'}
+                                        </label>
+                                        <input type="number" step="0.50" required
+                                            value={formData.productType === 'RENTAL' ? formData.rentalPricePerDay : formData.price}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (formData.productType === 'RENTAL') setFormData({ ...formData, rentalPricePerDay: val, price: val });
+                                                else setFormData({ ...formData, price: val });
+                                            }}
+                                            placeholder="$0"
+                                            className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:border-rose-400 transition-all" />
                                     </div>
-                                    <div className="col-span-2">
-                                        <label className="block text-xs font-bold text-blue-700 dark:text-blue-500 mb-1 transition-colors duration-300">Dimensiones</label>
-                                        <input
-                                            type="text"
-                                            value={formData.specifications?.dimensions || ''}
-                                            onChange={e => setFormData({
-                                                ...formData,
-                                                specifications: { ...formData.specifications, dimensions: e.target.value }
-                                            })}
-                                            placeholder="Ej. 2.40m x 0.75m"
-                                            className="w-full p-2 border border-blue-200 dark:border-blue-800/50 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors duration-300"
-                                        />
-                                    </div>
+                                </div>
 
-                                    {/* Variantes Section */}
-                                    <div className="col-span-2 pt-2 border-t border-blue-200 dark:border-blue-800/30 transition-colors duration-300">
-                                        <label className="block text-xs font-bold text-blue-700 dark:text-blue-500 mb-2 transition-colors duration-300">Variantes (Opcional - Ej. Niño/Niña)</label>
-                                        <div className="space-y-2">
-                                            {(formData.specifications?.variants || []).map((variant, idx) => (
-                                                <div key={idx} className="flex gap-2 items-center bg-white dark:bg-slate-800 p-2 rounded-lg border border-blue-100 dark:border-blue-900/40 transition-colors duration-300">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nombre (ej. Niño)"
-                                                        value={variant.name}
-                                                        onChange={e => {
-                                                            const newVariants = [...(formData.specifications.variants || [])];
-                                                            newVariants[idx].name = e.target.value;
-                                                            setFormData({ ...formData, specifications: { ...formData.specifications, variants: newVariants } });
-                                                        }}
-                                                        className="flex-1 p-1.5 text-xs border border-slate-200 dark:border-slate-600 rounded outline-none bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors duration-300"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="URL Imagen"
-                                                        value={variant.img}
-                                                        onChange={e => {
-                                                            const newVariants = [...(formData.specifications.variants || [])];
-                                                            newVariants[idx].img = e.target.value;
-                                                            setFormData({ ...formData, specifications: { ...formData.specifications, variants: newVariants } });
-                                                        }}
-                                                        className="flex-1 p-1.5 text-xs border border-slate-200 dark:border-slate-600 rounded outline-none bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-colors duration-300"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const newVariants = formData.specifications.variants.filter((_, i) => i !== idx);
-                                                            setFormData({ ...formData, specifications: { ...formData.specifications, variants: newVariants } });
-                                                        }}
-                                                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors duration-300"
-                                                    >
-                                                        <X size={14} />
-                                                    </button>
-                                                </div>
-                                            ))}
+                                {/* Description */}
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Descripción</label>
+                                    <textarea rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder="Describe el producto..."
+                                        className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:border-rose-400 transition-all" />
+                                </div>
+
+                                {/* Customizable */}
+                                {formData.productType === 'SNACK' && (
+                                    <label className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer active:scale-[0.98] transition-transform">
+                                        <input type="checkbox" checked={formData.customizable}
+                                            onChange={e => setFormData({ ...formData, customizable: e.target.checked })}
+                                            className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500 border-slate-300 dark:border-slate-600" />
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Producto personalizable (Bowl)</span>
+                                    </label>
+                                )}
+                            </>
+                        )}
+
+                        {/* ════ TAB: PHOTOS ════ */}
+                        {activeTab === 'photos' && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Galería de fotos</p>
+                                    <span className="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{allImages.length} / 5</span>
+                                </div>
+
+                                {/* Image Grid */}
+                                <div className="grid grid-cols-3 gap-2.5">
+                                    {allImages.map((url, idx) => (
+                                        <div key={url + idx} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-slate-100 dark:border-slate-700 group">
+                                            <img src={url} alt={`Foto ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="55" text-anchor="middle" fill="%2394a3b8" font-size="12">Error</text></svg>'; }} />
+                                            {idx === 0 && (
+                                                <span className="absolute top-1.5 left-1.5 bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-lg uppercase tracking-wider">
+                                                    Principal
+                                                </span>
+                                            )}
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    const newVariants = [...(formData.specifications.variants || []), { name: '', img: '' }];
-                                                    setFormData({ ...formData, specifications: { ...formData.specifications, variants: newVariants } });
-                                                }}
-                                                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 transition-colors duration-300"
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeImage(idx); }}
+                                                className="absolute top-1.5 right-1.5 bg-red-500 text-white p-1.5 rounded-full shadow-lg hover:bg-red-600 transition-colors sm:opacity-0 sm:group-hover:opacity-100"
                                             >
-                                                <Plus size={14} /> Agregar Variante
+                                                <Trash2 size={11} />
                                             </button>
                                         </div>
+                                    ))}
+
+                                    {/* Upload button */}
+                                    {allImages.length < 5 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={uploading}
+                                            className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-rose-400 dark:hover:border-rose-500 flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-rose-50/50 dark:hover:bg-rose-900/10"
+                                        >
+                                            {uploading ? (
+                                                <div className="w-7 h-7 border-3 border-rose-500 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <Camera size={22} className="text-slate-400 dark:text-slate-500" />
+                                                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Subir foto</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                />
+
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center leading-relaxed">
+                                    📸 Sube hasta <strong>5 fotos</strong> desde tu galería.
+                                    La primera será la imagen principal del producto.
+                                </p>
+
+                                {/* URL fallback */}
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">O pegar URL</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            id="url-paste-input"
+                                            type="text"
+                                            placeholder="https://..."
+                                            className="flex-1 p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:border-rose-400 transition-all"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const input = document.getElementById('url-paste-input');
+                                                const url = input?.value?.trim();
+                                                if (url && allImages.length < 5) {
+                                                    setFormData(prev => {
+                                                        const existing = [prev.img, ...(prev.gallery || [])].filter(Boolean);
+                                                        const all = [...existing, url];
+                                                        return { ...prev, img: all[0] || '', gallery: all.slice(1) };
+                                                    });
+                                                    input.value = '';
+                                                }
+                                            }}
+                                            className="px-4 bg-slate-900 dark:bg-slate-700 text-white rounded-xl font-bold text-sm hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+                                        >
+                                            <Plus size={18} />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        )}                        <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">Descripción</label>
-                            <textarea rows="3" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors duration-300"></textarea>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1 transition-colors duration-300">URL Imagen</label>
-                            <input type="text" value={formData.img} onChange={e => setFormData({ ...formData, img: e.target.value })} placeholder="https://... o /images/producto.jpg" className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors duration-300" />
-                        </div>
+                        )}
 
-                        {formData.productType === 'SNACK' && (
-                            <div className="flex items-center gap-2 pt-2">
-                                <input type="checkbox" id="customizable" checked={formData.customizable} onChange={e => setFormData({ ...formData, customizable: e.target.checked })} className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 transition-colors duration-300" />
-                                <label htmlFor="customizable" className="text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors duration-300">Producto personalizable (Bowl)</label>
+                        {/* ════ TAB: RENTAL ════ */}
+                        {activeTab === 'rental' && formData.productType === 'RENTAL' && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Capacidad</label>
+                                        <input type="text" value={formData.specifications?.capacity || ''}
+                                            onChange={e => setFormData({ ...formData, specifications: { ...formData.specifications, capacity: e.target.value } })}
+                                            placeholder="10 personas"
+                                            className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Material</label>
+                                        <input type="text" value={formData.specifications?.material || ''}
+                                            onChange={e => setFormData({ ...formData, specifications: { ...formData.specifications, material: e.target.value } })}
+                                            placeholder="Plástico"
+                                            className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Dimensiones</label>
+                                    <input type="text" value={formData.specifications?.dimensions || ''}
+                                        onChange={e => setFormData({ ...formData, specifications: { ...formData.specifications, dimensions: e.target.value } })}
+                                        placeholder="2.40m x 0.75m"
+                                        className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm" />
+                                </div>
+
+                                {/* Variants */}
+                                <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                                    <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-widest">Variantes</label>
+                                    <div className="space-y-2">
+                                        {(formData.specifications?.variants || []).map((variant, idx) => (
+                                            <div key={idx} className="flex gap-2 items-center bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl">
+                                                <input type="text" placeholder="Nombre" value={variant.name}
+                                                    onChange={e => {
+                                                        const v = [...(formData.specifications.variants || [])];
+                                                        v[idx] = { ...v[idx], name: e.target.value };
+                                                        setFormData({ ...formData, specifications: { ...formData.specifications, variants: v } });
+                                                    }}
+                                                    className="flex-1 p-2 text-xs border border-slate-200 dark:border-slate-600 rounded-lg outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white" />
+                                                <button type="button"
+                                                    onClick={() => {
+                                                        const v = formData.specifications.variants.filter((_, i) => i !== idx);
+                                                        setFormData({ ...formData, specifications: { ...formData.specifications, variants: v } });
+                                                    }}
+                                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button type="button"
+                                            onClick={() => {
+                                                const v = [...(formData.specifications?.variants || []), { name: '', img: '' }];
+                                                setFormData({ ...formData, specifications: { ...formData.specifications, variants: v } });
+                                            }}
+                                            className="text-xs font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                            <Plus size={14} /> Agregar variante
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </form>
                 </div>
-                <div className="p-5 border-t dark:border-slate-800/50 bg-slate-50 dark:bg-slate-900/50 flex justify-end gap-3 rounded-b-2xl transition-colors duration-300">
-                    <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors duration-300">Cancelar</button>
-                    <button type="submit" form="product-form" className="px-5 py-2.5 bg-slate-900 dark:bg-rose-600 text-white rounded-xl font-bold shadow-lg hover:bg-slate-800 dark:hover:bg-rose-500 transition-colors duration-300 flex items-center gap-2">
-                        <Save size={18} /> Guardar
+
+                {/* ── Footer ── */}
+                <div className="px-5 py-4 border-t dark:border-slate-800/50 bg-slate-50/80 dark:bg-slate-950/50 flex gap-3 shrink-0">
+                    <button type="button" onClick={onClose}
+                        className="flex-1 py-3 rounded-xl font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-sm">
+                        Cancelar
+                    </button>
+                    <button type="submit" form="product-form"
+                        className="flex-1 py-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl font-bold shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 transition-all text-sm flex items-center justify-center gap-2 active:scale-[0.98]">
+                        <Save size={16} /> Guardar
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

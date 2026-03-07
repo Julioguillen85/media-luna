@@ -13,6 +13,7 @@ public class CustomerOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String customer;
+    private String email;
     private String phone;
     private String date;
     private String time;
@@ -20,9 +21,10 @@ public class CustomerOrder {
     private String eventLocation;
     private Double total;
     private String status;
+    private String paymentLink;
     private LocalDateTime createdAt;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     private List<OrderItem> items;
 

@@ -1,3 +1,5 @@
+import Logger from '../utils/logger';
+
 const API_URL = "/api";
 
 function urlBase64ToUint8Array(base64String) {
@@ -25,22 +27,27 @@ export const notificationService = {
     subscribeToPush: async () => {
         if (!('serviceWorker' in navigator)) return null;
 
-        const registration = await navigator.serviceWorker.ready;
-        const publicKey = await notificationService.getPublicKey();
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const publicKey = await notificationService.getPublicKey();
 
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey)
-        });
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
+            });
 
-        // Send subscription to backend
-        await fetch(`${API_URL}/notifications/subscribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(subscription)
-        });
+            // Send subscription to backend
+            await fetch(`${API_URL}/notifications/subscribe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription)
+            });
 
-        console.log('Push Subscribed!');
-        return subscription;
+            Logger.info('Push Subscribed successfully!');
+            return subscription;
+        } catch (error) {
+            Logger.error('Error during push subscription process', error);
+            throw error;
+        }
     }
 };

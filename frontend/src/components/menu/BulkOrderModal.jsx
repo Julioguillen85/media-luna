@@ -17,12 +17,17 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
     if (!isOpen || !product) return null;
 
     const numericCount = parseInt(peopleCount) || 0;
+    const isBrincolin = product?.name?.toLowerCase().includes('brincol');
+    const isRental = product?.category?.includes('Renta') || product?.productType === 'RENTAL';
+    const minCount = isRental ? 1 : 30;
+    const maxCount = isBrincolin ? 2 : 9999;
+    const step = isRental ? 1 : 10;
 
     const handleConfirm = () => {
-        const minCount = (product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30;
-        if (numericCount >= minCount) {
-            const isElote = product.name?.toLowerCase().includes('elote');
-            const otherElote = isElote ? products.find(p => p.name.toLowerCase().includes('elote') && p.id !== product.id) : null;
+        const mc = isRental ? 1 : 30;
+        if (numericCount >= mc) {
+            const isElote = ['elote en vaso', 'elote revolcado'].some(name => product.name?.toLowerCase().includes(name));
+            const otherElote = isElote ? products.find(p => ['elote en vaso', 'elote revolcado'].some(name => p.name?.toLowerCase().includes(name)) && p.id !== product.id) : null;
             onConfirm(numericCount, splitMode, splitValue, otherElote);
         }
     };
@@ -51,9 +56,9 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
 
                     <div className="flex items-center gap-6">
                         <button
-                            onClick={() => setPeopleCount(Math.max((product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30, numericCount - 1).toString())}
-                            disabled={numericCount <= ((product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30)}
-                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${numericCount <= ((product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30)
+                            onClick={() => setPeopleCount(Math.max(minCount, numericCount - step).toString())}
+                            disabled={numericCount <= minCount}
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${numericCount <= minCount
                                 ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
                                 : 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/60 active:scale-95 shadow-sm'
                                 }`}
@@ -71,20 +76,24 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
                                     setPeopleCount(val);
                                 }}
                                 onBlur={() => {
-                                    const minAllowedCount = (product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30;
-                                    if (numericCount < minAllowedCount) setPeopleCount(minAllowedCount.toString());
+                                    if (numericCount < minCount) setPeopleCount(minCount.toString());
+                                    else if (numericCount > maxCount) setPeopleCount(maxCount.toString());
                                     else setPeopleCount(numericCount.toString());
                                 }}
                                 className="text-5xl font-extrabold text-slate-900 dark:text-white bg-transparent text-center w-24 outline-none"
                             />
                             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
-                                {(product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 'Cantidad' : 'Personas'}
+                                {isRental ? 'Cantidad' : 'Personas'}
                             </span>
                         </div>
 
                         <button
-                            onClick={() => setPeopleCount((numericCount + 1).toString())}
-                            className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/60 flex items-center justify-center transition-all active:scale-95 shadow-sm"
+                            onClick={() => setPeopleCount(Math.min(maxCount, numericCount + step).toString())}
+                            disabled={numericCount >= maxCount}
+                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${numericCount >= maxCount
+                                ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
+                                : 'bg-rose-100 text-rose-600 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/60 active:scale-95 shadow-sm'
+                                }`}
                         >
                             <Plus size={24} />
                         </button>
@@ -92,10 +101,10 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
 
                     {/* Elote Split Selector */}
                     {(() => {
-                        const isElote = ['elote en vaso', 'tostielote'].some(name => product.name?.toLowerCase().includes(name));
+                        const isElote = ['elote en vaso', 'elote revolcado'].some(name => product.name?.toLowerCase().includes(name));
                         if (!isElote || numericCount < 30) return null;
 
-                        const otherElote = products.find(p => ['elote en vaso', 'tostielote'].some(name => p.name?.toLowerCase().includes(name)) && p.id !== product.id);
+                        const otherElote = products.find(p => ['elote en vaso', 'elote revolcado'].some(name => p.name?.toLowerCase().includes(name)) && p.id !== product.id);
                         if (!otherElote) return null;
 
                         return (
@@ -112,7 +121,7 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
                                         className="mt-1 w-4 h-4 accent-amber-500 rounded text-amber-500 focus:ring-amber-500"
                                     />
                                     <label htmlFor="bulkSplitMode" className="text-sm text-amber-900 font-medium cursor-pointer leading-tight">
-                                        🌽 Al ser base elote, puedes combinar tu barra para tus invitados con tostielotes u otros (se agregarán ambos al carrito con precio combinado).
+                                        🌽 Al ser base elote, puedes combinar tu barra para tus invitados con {otherElote.name} (se agregarán ambos al carrito con precio combinado).
                                     </label>
                                 </div>
 
@@ -170,6 +179,6 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

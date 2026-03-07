@@ -9,6 +9,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -38,6 +40,9 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/options").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").permitAll()
                         .requestMatchers("/api/chat").permitAll() // Allow Chatbot
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/upload").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/gallery").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/orders/*/status").permitAll() // Allow
                                                                                                                       // status
                                                                                                                       // updates
