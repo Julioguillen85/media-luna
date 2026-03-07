@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class GroqService {
 
@@ -276,16 +278,16 @@ public class GroqService {
                 prompt.append("  - IMPORTANTE: Para agregar al carrito, el nombre en ||SET_QTY|| debe ser EXACTAMENTE: 'tablon', 'tablon sillas', 'tablon con sillas y mantel', 'mesa redonda', 'mesa redonda con sillas', 'mesa redonda con sillas y mantel', 'brincolin', o 'silla plegable'.\n");
                 prompt.append("  - FLUJO OBLIGATORIO PARA RENTAS (3 PASOS SIN SALTARSE):\n");
                 prompt.append("    PASO 1: Cliente elige variante (ej: 'con mantel', 'con sillas', 'solos') → calcula precio total (cantidad × precio) y muéstralo.\n");
-                prompt.append("    PASO 2: Pregunta EXACTAMENTE: '¿Lo agrego al carrito?' — REGLA DE ORO: Elegir una variante NO es confirmar el pedido. NO EMITAS ||SET_QTY|| AQUÍ. PROHIBIDO emitir comandos en el PASO 2.\n");
-                prompt.append("      ❌ EJEMPLO INCORRECTO: 'Serían $1100. ¿Lo agrego al carrito? ||SET_QTY:5:tablon con sillas y mantel:1100||'\n");
-                prompt.append("      ✅ EJEMPLO CORRECTO: 'Serían $1100 en total. ¿Lo agrego al carrito?'\n");
+                prompt.append("    PASO 2: Pregunta EXACTAMENTE: '¿gustas que lo agregue al carrito o quieres revisar algo mas?' — REGLA DE ORO: Elegir una variante NO es confirmar el pedido. NO EMITAS ||SET_QTY|| AQUÍ. PROHIBIDO emitir comandos en el PASO 2.\n");
+                prompt.append("      ❌ EJEMPLO INCORRECTO: 'Serían $1100. ¿gustas que lo agregue al carrito o quieres revisar algo mas? ||SET_QTY:5:tablon con sillas y mantel:1100||'\n");
+                prompt.append("      ✅ EJEMPLO CORRECTO: 'Serían $1100 en total. ¿gustas que lo agregue al carrito o quieres revisar algo mas?'\n");
                 prompt.append("    PASO 3: Cliente responde confirmando ('sí', 'dale', 'va', 'ok', 'agrega') → AHORA SÍ es OBLIGATORIO emitir ||SET_QTY:N:nombreVariante:precioTotal||.\n");
                 prompt.append("      ⚠️ MUY IMPORTANTE EN PASO 3: Incluso si te das cuenta de que el pedido ha terminado y vas a pedir el Nombre del cliente, SIGUES OBLIGADO a emitir el ||SET_QTY|| del producto recién confirmado en ese mismo mensaje.\n");
                 prompt.append("      ✅ EJEMPLO CORRECTO PASO 3 (Transición normal): '¡Agregado! ¿Gustas agregar algo más o sería todo?' ||SET_QTY:5:tablon con sillas:1000||\n");
                 prompt.append("    ⚠️ JAMÁS combines PASO 2 y PASO 3 en el mismo mensaje.\n");
                 prompt.append("  - 🚨 REGLA ANTI-MULTIPLICACIÓN DE MOBILIARIO (¡ESTRICTA!):\n");
                 prompt.append("    Si el cliente pide la cantidad Y la variante exacta en un solo mensaje (ej: 'necesito 5 tablones con sillas y mantel'), SALTA LOS PASOS 1 Y 2 de preguntas, asume la variante completa.\n");
-                prompt.append("    PASO INMEDIATO: Calcula el MULTIPLO EXACTO para ESA variante SOLAMENTE (5 x Precio `tablon con sillas y mantel`), muéstrale el total y pregúntale '¿Lo agrego al carrito?'.\n");
+                prompt.append("    PASO INMEDIATO: Calcula el MULTIPLO EXACTO para ESA variante SOLAMENTE (5 x Precio `tablon con sillas y mantel`), muéstrale el total y pregúntale '¿gustas que lo agregue al carrito o quieres revisar algo mas?'.\n");
                 prompt.append("    🚫 ¡JAMÁS EMITAS MÁS DE UN COMANDO `||SET_QTY||` PARA EL MISMO MUEBLE! Si pidió 'tablón con sillas y mantel', su comando al confirmar será ÚNICAMENTE `||SET_QTY:5:tablon con sillas y mantel:Total||`.\n");
                 prompt.append("    🚫 ¡ESTÁ ESTRICTAMENTE PROHIBIDO separar su pedido en 5 tablones, 5 sillas y 5 manteles! Es UN SOLO paquete llamado `tablon con sillas y mantel`.\n");
                 prompt.append("  - ⚠️ REGLA ANTI-CIERRE PREMATURO: Después de emitir un ||SET_QTY|| para una renta, tu ÚNICA pregunta textual debe ser: '¿Gustas agregar algo más o sería todo?'. ¡PROHIBIDO empezar a pedir el Nombre, PROHIBIDO hacer resúmenes del pedido, PROHIBIDO sumar totales de otros productos!\n\n");
@@ -295,20 +297,20 @@ public class GroqService {
                 prompt.append("  - Para los precios, LEE EXACTAMENTE EL NÚMERO DE LA TABLA DE MAYOREO. Si la tabla dice '[De 50 a 59 personas: $2500]', el precio es EXACTAMENTE $2500. Tu no calcules nada.\n");
                 prompt.append("  - ⚠️ REGLA ANTI-ERRORES: Lee con extremo cuidado el rango de personas. NUNCA des el precio de un rango mayor (ej. dar precio de 70 personas cuando pidieron 50). Verifica dos veces qué rango de la tabla aplica antes de responder.\n");
                 prompt.append("  - El servicio es MÍNIMO 30 personas. Si pide menos: 'El mínimo es 30 personas. ¿Para cuántas sería?'\n");
-                prompt.append("  - El servicio incluye 2 horas de atención.\n");
+                prompt.append("  - El servicio dura 1 hora y 30 minutos si son menos de 50 personas. Si son 50 personas o más, el servicio dura 2 horas.\n");
                 prompt.append("  - Cuando pide un snack SIN mencionar personas: pregunta SOLO '¿Para cuántas personas es? (mínimo 30)'\n");
                 prompt.append("  - Cuando da el número de personas: busca en priceTiers del producto.\n");
                 prompt.append("    priceTiers = [{minGuests, maxGuests, price}] donde price es el TOTAL ya calculado. Úsalo directamente.\n");
                 prompt.append("  - FLUJO OBLIGATORIO 6 PASOS:\n");
                 prompt.append("    (1) Pregunta personas\n");
                 prompt.append("    (2) Busca tier correspondiente\n");
-                prompt.append("    (3) Muestra SOLO el total: 'Para X personas son $Y total (2 horas de servicio)'\n");
-                prompt.append("    (4) Pregunta '¿Lo agrego al carrito?'\n");
+                prompt.append("    (3) Muestra SOLO el total: 'Para X personas son $Y en total (Servicio de [1 hora y 30 mins / 2 horas])'\n");
+                prompt.append("    (4) Pregunta EXACTAMENTE: '¿gustas que lo agregue al carrito o quieres revisar algo mas?'\n");
                 prompt.append("    (5) Espera confirmación: 'sí','ándale','va','agrégalo','dale'\n");
-                prompt.append("    (6) Emite ||SET_QTY:1:nombreProducto:precioTotal||\n");
+                prompt.append("    (6) Emite ||SET_QTY:N:nombreProducto:precioTotal|| (donde N es el número exacto de personas que pidió el cliente)\n");
                 prompt.append("  - PROHIBIDO saltarse el paso 4. PROHIBIDO emitir ||SET_QTY|| antes de confirmación explícita del cliente.\n");
                 prompt.append("  - Si el cliente dice 'no','cancela','déjalo': NO emitas ||SET_QTY||, pregunta si necesita algo más.\n");
-                prompt.append("  - Para preguntar confirmación SIEMPRE usa exactamente: '¿Lo agrego al carrito?' NUNCA uses '¿Es correcto?', '¿Así quedamos?' ni variantes.\n");
+                prompt.append("  - Para preguntar confirmación SIEMPRE usa exactamente: '¿gustas que lo agregue al carrito o quieres revisar algo mas?' NUNCA uses '¿Es correcto?', '¿Así quedamos?' ni variantes.\n");
                 prompt.append("  - REGLA DE NO-RESUMEN: Al agregar productos, concéntrate SOLO en confirmar ese producto específico. ESTÁ ESTRICTAMENTE PROHIBIDO mostrar un resumen de toda la orden acumulada, volver a pedir datos de contacto o mencionar descuentos de abonos previos. Guarda el resumen SÓLO para el cierre final.\n\n");
 
                 prompt.append("REGLA PAPAS/BOWL (producto especial):\n");
@@ -319,16 +321,16 @@ public class GroqService {
                 prompt.append("        • Bowl 1/4: $[precio de tabla]\n");
                 prompt.append("        • Bowl 1/2: $[precio de tabla]\n");
                 prompt.append("        ¿Cuál prefieres?'\n");
-                prompt.append("    (3) Cliente elige tamaño → confirma precio del tamaño elegido → pregunta EXACTAMENTE: '¿Lo agrego al carrito?'\n");
+                prompt.append("    (3) Cliente elige tamaño → confirma precio del tamaño elegido → pregunta EXACTAMENTE: '¿gustas que lo agregue al carrito o quieres revisar algo mas?'\n");
                 prompt.append("    (4) Espera confirmación\n");
                 prompt.append("    (5) Cliente confirma → emite comandos Y NADA MÁS\n");
                 prompt.append("  - Bowl 1/2: busca en la columna 'Bowl 1/2' de la TABLA DE PRECIOS PAPAS. Busca la fila donde el rango de personas incluya al número dado.\n");
                 prompt.append("  - Bowl 1/4: busca en la columna 'Bowl 1/4' de la TABLA DE PRECIOS PAPAS. Busca la fila donde el rango de personas incluya al número dado.\n");
                 prompt.append("  - PROHIBIDO inventar precios. Usa EXACTAMENTE el valor '$' que aparece en la tabla.\n");
                 prompt.append("  - Al confirmar el cliente, emite OBLIGATORIAMENTE ambos comandos juntos:\n");
-                prompt.append("    ||SET_QTY:1:Papas Preparadas (Bowl):precioTotal|| ||BOWL_SIZE:quarter|| (si eligió 1/4)\n");
-                prompt.append("    ||SET_QTY:1:Papas Preparadas (Bowl):precioTotal|| ||BOWL_SIZE:half|| (si eligió 1/2)\n");
-                prompt.append("    NOTA: N siempre es 1 para papas. El número de personas va en el precioTotal, no en la cantidad.\n");
+                prompt.append("    ||SET_QTY:N:Papas Preparadas (Bowl):precioTotal|| ||BOWL_SIZE:quarter|| (donde N es el número de personas, ej: 30)\n");
+                prompt.append("    ||SET_QTY:N:Papas Preparadas (Bowl):precioTotal|| ||BOWL_SIZE:half|| (donde N es el número de personas, ej: 30)\n");
+                prompt.append("    NOTA: N DEBE ser el número de personas para que el carrito sepa para cuántos es. El precioTotal debe ser el de la tabla.\n");
 
                 prompt.append("  - CRÍTICO: SOLO EN EL MOMENTO EXACTO en que emitas el ||SET_QTY|| para Bowl (no después, no antes), tu ÚNICA respuesta textual debe ser EXACTAMENTE:\n");
                 prompt.append("    '¡Claro! Vamos a armar tus Papas Preparadas (Bowl).'\n");
@@ -340,8 +342,8 @@ public class GroqService {
                 prompt.append("REGLA CHAROLAS DE SNACKS:\n");
                 prompt.append("  - Las Charolas NO TIENEN TAMAÑOS. Si piden una charola, NO PREGUNTES EL TAMAÑO.\n");
                 prompt.append("  - Solo pregunta para cuántas personas es y cotiza usando priceTiers.\n");
-                prompt.append("  - Cuando el cliente acepte agregar: emite ||SET_QTY:1:Charola de Snacks:precioTotal||\n");
-                prompt.append("  - N siempre es 1.\n");
+                prompt.append("  - Cuando el cliente acepte agregar: emite ||SET_QTY:N:Charola de Snacks:precioTotal|| (donde N es el número de personas)\n");
+                prompt.append("  - N DEBE ser el número de personas (ej: si es para 30, emite ||SET_QTY:30:Charola de Snacks:1500||).\n");
                 prompt.append("  - Cuando emitas ||SET_QTY|| para Charola, tu respuesta textual debe ser: '¡Genial! Vamos a personalizar tu Charola de Snacks.'\n");
                 prompt.append("  - Si la charola es un producto ADICIONAL (ya había otros en el carrito), agrega al final: '¿Gustas agregar algo más o sería todo? 🌙'\n\n");
 
@@ -358,14 +360,14 @@ public class GroqService {
                 prompt.append("    PASO 2: Saca el porcentaje que representa cada parte del total (70 es el 70%, 30 es el 30%).\n");
                 prompt.append("    PASO 3: Sácale ese porcentaje al Precio Total. (El 70% de $4500 es $3150. El 30% de $4500 es $1350). Esos son los precios fijos que debes poner en ||SET_QTY||.\n");
                 prompt.append("    PROHIBIDO buscar en la tabla el precio de 70 y el precio de 30 por separado. Solo busca el de 100 y divídelo en porcentajes.\n");
-                prompt.append("  - Para confirmar la combinación, pregunta EXACTAMENTE: '¿Lo agrego al carrito?' NUNCA uses '¿Te gustaría proceder?' ni variantes.\n");
+                prompt.append("  - Para confirmar la combinación, pregunta EXACTAMENTE: '¿gustas que lo agregue al carrito o quieres revisar algo mas?' NUNCA uses '¿Te gustaría proceder?' ni variantes.\n");
                 prompt.append("  - ⚠️ REGLA CRÍTICA DESPUÉS DE ELOTES: Si el cliente confirma la combinación y en el mismo mensaje dice 'sería todo', ¡NO CIERRES EL PEDIDO TODAVÍA! Emite los ||SET_QTY|| obligatorios y en el texto visible responde: '¡Agregado! Para finalizar, ¿cuál es tu nombre?'. PROHIBIDO emitir ||ORDER_COMPLETE|| sin antes pedir los 6 datos.\n\n");
                 // ── GENERALES ──
                 prompt.append("REGLAS GENERALES:\n");
                 prompt.append("1. Usa nombre EXACTO de productos de la lista (en SINGULAR, JAMÁS EN PLURAL, EJ: NO DIGAS 'tablones', di 'tablon'). Sin cambiar acentos.\n");
-                prompt.append("2. Para RENTAS: ten en cuenta la cantidad exacta de unidades que pidió el cliente. NO asumas 1. Para SNACKS: N siempre es 1 independientemente del número de personas.\n");
+                prompt.append("2. Para RENTAS: N es la cantidad exacta de unidades. Para SNACKS y BEBIDAS: N DEBE ser el número exacto de personas.\n");
                 prompt.append("3. MUY IMPORTANTE: Si el cliente ESPCÍFICAMENTE confirma agregar un producto ('sí', 'agregalo'), ESTÁS OBLIGADO a emitir ||SET_QTY|| al final. EXCEPCIÓN CRÍTICA: Responder a una pregunta de variante de renta (ej. decir 'con mantel') NO ES CONFIRMAR. En ese momento está ESTRICTAMENTE PROHIBIDO emitir ||SET_QTY||.\n");
-                prompt.append("   IMPORTANTE: Para snacks y bebidas, N en SET_QTY SIEMPRE es 1. El número de personas NO va en N, va reflejado en el precioTotal.\n");
+                prompt.append("   IMPORTANTE: Para snacks, bebidas, elotes y charolas, N en SET_QTY DEBE ser el NÚMERO DE PERSONAS (ej: ||SET_QTY:50:Elote en vaso:2000||).\n");
                 prompt.append("4. Para 'qué me recomiendas': sugiere 2-3 productos populares brevemente.\n");
                 prompt.append("5. Para preguntas de ingredientes o contenido: responde EXCLUSIVAMENTE con la descripción del producto que aparece en la lista de arriba. PROHIBIDO ABSOLUTO inventar ingredientes, adiciones o detalles que NO estén en la descripción. Si la descripción no detalla ingredientes, di solo lo que dice la descripción.\n");
                 prompt.append("6. PROHIBIDO hacer dos preguntas en el mismo mensaje. EXCEPCIÓN: Si el cliente pide MÚLTIPLES productos diferentes a la vez, SÍ puedes hacer una pregunta por cada producto que requiera aclaración.\n");
@@ -420,7 +422,8 @@ public class GroqService {
                         Map<String, Object> requestBody = new HashMap<>();
                         requestBody.put("model", model);
                         requestBody.put("messages", messages);
-                        requestBody.put("temperature", 0.7);
+                        // Bajar la temperatura para evitar alucinaciones ("Lama LamaORB uns Nev")
+                        requestBody.put("temperature", 0.3);
                         requestBody.put("max_tokens", 500);
 
                         // Configurar headers
@@ -447,7 +450,19 @@ public class GroqService {
                                                         .get("message");
                                         String content = (String) message.get("content");
                                         if (content != null && !content.isEmpty()) {
-                                                return content.trim();
+                                                String trimmedContent = content.trim();
+
+                                                // --- FILTRO ANTI-ALUCINACIONES ---
+                                                // Check for repetitive "Lama" or "Cust" or symbol spam often seen in
+                                                // 70b-versatile hallucinations
+                                                if (isHallucinatedContent(trimmedContent)) {
+                                                        log.error("¡ALUCINACIÓN DETECTADA Y BLOQUEADA! Contenido: {}",
+                                                                        trimmedContent);
+                                                        return "¡Uy! Tuve un pequeño enredo procesando eso 😅. ¿Me podrías repetir tu mensaje de favor?";
+                                                }
+                                                // ---------------------------------
+
+                                                return trimmedContent;
                                         }
                                 }
                         }
@@ -455,8 +470,7 @@ public class GroqService {
                         return "Lo siento, tuve un problema procesando tu mensaje. ¿Puedes intentar de nuevo? 😅";
 
                 } catch (Exception e) {
-                        System.err.println("Error al llamar a Groq API: " + e.getMessage());
-                        e.printStackTrace();
+                        log.error("Error al llamar a Groq API: ", e);
                         return "Ups, tuve un problema técnico 🙈 ¿Me repites lo que necesitas?";
                 }
         }
@@ -531,5 +545,37 @@ public class GroqService {
                 }
 
                 return null;
+        }
+
+        /**
+         * FILTRO ANTI-ALUCINACIONES:
+         * Detecta si la respuesta contiene signos de degeneración de tokens (ej. "Lama
+         * Lama Lama",
+         * caracteres basura iterados, o "Cust Cust").
+         */
+        private boolean isHallucinatedContent(String t) {
+                if (t == null)
+                        return false;
+
+                // Si la IA repite "Lama" de forma anómala (ej. más de 3 veces)
+                int countLama = (t.length() - t.replace("Lama", "").length()) / "Lama".length();
+                if (countLama >= 3)
+                        return true;
+
+                // Si la IA repite "Cust" repetidamente
+                int countCust = (t.length() - t.replace("Cust", "").length()) / "Cust".length();
+                if (countCust >= 3)
+                        return true;
+
+                // Si la respuesta es ridículamente larga con corchetes vacíos o símbolos raros
+                // seguidos
+                if (t.contains("'][]") || t.contains("('][]"))
+                        return true;
+
+                // Si tiene combinaciones como "LamaORB" o palabras sin sentido aglutinadas
+                if (t.contains("LamaORB") || t.contains("LamaIPC") || t.contains("LamaFX"))
+                        return true;
+
+                return false;
         }
 }

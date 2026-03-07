@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class EmailService {
 
@@ -17,7 +19,7 @@ public class EmailService {
     @org.springframework.beans.factory.annotation.Value("${spring.mail.username:soportemedialuna@gmail.com}")
     private String senderEmail;
 
-    @org.springframework.beans.factory.annotation.Value("${admin.email:julioguillen85@gmail.com}")
+    @org.springframework.beans.factory.annotation.Value("${admin.email:medialuna.frutibar@gmail.com}")
     private String adminEmail;
 
     public void sendOrderNotification(CustomerOrder order) {
@@ -51,13 +53,19 @@ public class EmailService {
                             if (item.getQuantity() > 1) {
                                 sb.append(" (x").append(item.getQuantity()).append(")");
                             }
+                            sb.append("</strong>");
                         } else {
                             sb.append(item.getQuantity() == 1 ? " (Para 1 persona)"
                                     : " (Para " + item.getQuantity() + " personas)");
+                            sb.append("</strong>");
+                            String durationText = item.getQuantity() >= 50 ? "2 horas" : "1 hora y 30 minutos";
+                            sb.append(
+                                    "<div style='font-size: 11px; color: #d97706; margin-top: 2px; font-weight: 500;'>⏱️ Servicio de ")
+                                    .append(durationText).append("</div>");
                         }
+                    } else {
+                        sb.append("</strong>");
                     }
-
-                    sb.append("</strong>");
 
                     if (item.getCustomization() != null) {
                         boolean isPapas = itemNameLower.contains("papas preparadas");
@@ -185,7 +193,7 @@ public class EmailService {
 
             mailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("Failed to send order notification email", e);
         }
     }
 
@@ -220,13 +228,19 @@ public class EmailService {
                             if (item.getQuantity() > 1) {
                                 sb.append(" (x").append(item.getQuantity()).append(")");
                             }
+                            sb.append("</strong>");
                         } else {
                             sb.append(item.getQuantity() == 1 ? " (Para 1 persona)"
                                     : " (Para " + item.getQuantity() + " personas)");
+                            sb.append("</strong>");
+                            String durationText = item.getQuantity() >= 50 ? "2 horas" : "1 hora y 30 minutos";
+                            sb.append(
+                                    "<div style='font-size: 11px; color: #d97706; margin-top: 2px; font-weight: 500;'>⏱️ Servicio de ")
+                                    .append(durationText).append("</div>");
                         }
+                    } else {
+                        sb.append("</strong>");
                     }
-
-                    sb.append("</strong>");
 
                     if (item.getCustomization() != null) {
                         boolean isPapas = itemNameLower.contains("papas preparadas");
@@ -337,21 +351,28 @@ public class EmailService {
                                     +
                                     "<h3 style='color: #0369a1; margin-top: 0; font-size: 18px;'>💳 Aparta tu fecha</h3>"
                                     +
-                                    "<p style='color: #334155; font-size: 15px; margin-bottom: 20px; line-height: 1.5;'>Para asegurar tu reservación, por favor realiza el pago de tu anticipo del 50% de forma rápida y segura a través de Mercado Pago.</p>"
+                                    "<p style='color: #334155; font-size: 15px; margin-bottom: 20px; line-height: 1.5;'>Para asegurar tu reservación, puedes realizar el pago de tu anticipo de $500 MXN de forma rápida y segura a través de Mercado Pago.</p>"
                                     +
                                     "<a href='" + order.getPaymentLink()
                                     + "' style='background-color: #009ee3; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; width: 80%; max-width: 300px;'>Pagar con Mercado Pago</a>"
                                     +
                                     "<p style='color: #64748b; font-size: 14px; margin-top: 20px; margin-bottom: 15px;'>¿Prefieres pagar por transferencia o necesitas ayuda?</p>"
                                     +
-                                    "<a href='https://wa.me/525540306263?text=Hola,%20tengo%20dudas%20con%20el%20pago%20de%20mi%20pedido%20%23"
+                                    "<a href='https://wa.me/523123099318?text=Hola,%20tengo%20dudas%20con%20el%20pago%20de%20mi%20pedido%20%23"
                                     + order.getId() + "'"
                                     + " style='background-color: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 15px; width: 80%; max-width: 300px;'>Contactar por WhatsApp</a>"
                                     +
                                     "</div>"
                             : "")
                     +
-                    "<div style='text-align: center; margin-top: 30px; background-color: #f8fafc; padding: 15px; border-radius: 8px;'>"
+                    "<div style='text-align: center; margin-top: 30px; background-color: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;'>"
+                    +
+                    "<h3 style='color: #475569; margin-top: 0; font-size: 16px; margin-bottom: 8px;'>Políticas de Reservación</h3>"
+                    +
+                    "<p style='color: #64748b; font-size: 13px; margin: 0; line-height: 1.5;'>Te recordamos que <strong>no hay reembolsos por cancelación</strong> y requerimos un aviso con al menos <strong>10 días de anticipación</strong> para reagendar cualquier fecha sujeta a disponibilidad.</p>"
+                    +
+                    "</div>" +
+                    "<div style='text-align: center; margin-top: 15px; background-color: #f8fafc; padding: 15px; border-radius: 8px;'>"
                     +
                     "<p style='color: #64748b; font-size: 14px; margin: 0;'>Ponte en contacto con nosotros vía WhatsApp en cualquier momento respondiendo a nuestros mensajes si tienes dudas sobre tu pedido.</p>"
                     +
@@ -362,7 +383,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             mailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("Failed to send order confirmed email", e);
         }
     }
 
@@ -400,7 +421,7 @@ public class EmailService {
             helper.setText(htmlContent, true);
             mailSender.send(message);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            log.error("Failed to send order completed email", e);
         }
     }
 
@@ -418,10 +439,9 @@ public class EmailService {
             helper.setText(htmlReport, true);
 
             mailSender.send(message);
-            System.out.println("✅ Reporte semanal enviado por email a " + toEmail);
+            log.info("✅ Reporte semanal enviado por email a {}", toEmail);
         } catch (MessagingException e) {
-            System.err.println("❌ Error enviando reporte por email: " + e.getMessage());
-            e.printStackTrace();
+            log.error("❌ Error enviando reporte por email", e);
         }
     }
 }

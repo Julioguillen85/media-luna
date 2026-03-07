@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Package, User, Phone, MapPin, Calendar, Clock, ChevronDown, ChevronUp, Trash2, Mail, MessageCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder }) {
     const [expandedOrder, setExpandedOrder] = useState(null);
@@ -7,6 +8,9 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
     const [filterStatus, setFilterStatus] = useState('ALL');
     const [sortOrder, setSortOrder] = useState('DESC');
     const itemsPerPage = 6;
+
+    const { user } = useAuth();
+    const isAssistant = user?.role === 'ROLE_ASSISTANT';
 
     const toggleExpand = (orderId) => {
         setExpandedOrder(expandedOrder === orderId ? null : orderId);
@@ -211,12 +215,14 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
                                             <MessageCircle size={18} />
                                         </a>
                                     )}
-                                    <button
-                                        onClick={() => onDeleteOrder(order.id)}
-                                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-300"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    {!isAssistant && (
+                                        <button
+                                            onClick={() => onDeleteOrder(order.id)}
+                                            className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors duration-300"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}

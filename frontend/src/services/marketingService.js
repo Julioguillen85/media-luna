@@ -1,3 +1,5 @@
+import Logger from '../utils/logger';
+
 const API_BASE = '/api/marketing';
 
 function getAuthHeaders() {
@@ -8,6 +10,26 @@ function getAuthHeaders() {
     };
 }
 
+async function apiCall(url, options, errorMsg) {
+    try {
+        const res = await fetch(url, { ...options, headers: getAuthHeaders() });
+        if (!res.ok) {
+            let detail = '';
+            try {
+                const data = await res.json();
+                detail = data.error || data.message || '';
+            } catch (e) { }
+            const finalMsg = detail ? `${errorMsg}: ${detail}` : errorMsg;
+            Logger.error(finalMsg, { status: res.status, url });
+            throw new Error(finalMsg);
+        }
+        return res.json();
+    } catch (error) {
+        Logger.error(`Network or unexpected error: ${errorMsg}`, error, { url });
+        throw error;
+    }
+}
+
 // ==================== POSTS ====================
 
 export async function fetchPosts(startDate, endDate) {
@@ -15,130 +37,90 @@ export async function fetchPosts(startDate, endDate) {
     if (startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
     }
-    const res = await fetch(url, { headers: getAuthHeaders() });
-    if (!res.ok) throw new Error('Error cargando posts');
-    return res.json();
+    return apiCall(url, {}, 'Error cargando posts');
 }
 
 export async function createPost(post) {
-    const res = await fetch(`${API_BASE}/posts`, {
+    return apiCall(`${API_BASE}/posts`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify(post)
-    });
-    if (!res.ok) throw new Error('Error creando post');
-    return res.json();
+    }, 'Error creando post');
 }
 
 export async function updatePost(id, post) {
-    const res = await fetch(`${API_BASE}/posts/${id}`, {
+    return apiCall(`${API_BASE}/posts/${id}`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
         body: JSON.stringify(post)
-    });
-    if (!res.ok) throw new Error('Error actualizando post');
-    return res.json();
+    }, 'Error actualizando post');
 }
 
 export async function deletePost(id) {
-    const res = await fetch(`${API_BASE}/posts/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-    });
-    if (!res.ok) throw new Error('Error eliminando post');
-    return res.json();
+    return apiCall(`${API_BASE}/posts/${id}`, {
+        method: 'DELETE'
+    }, 'Error eliminando post');
 }
 
 export async function publishPost(id) {
-    const res = await fetch(`${API_BASE}/posts/${id}/publish`, {
-        method: 'POST',
-        headers: getAuthHeaders()
-    });
-    if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error publicando post');
-    }
-    return res.json();
+    return apiCall(`${API_BASE}/posts/${id}/publish`, {
+        method: 'POST'
+    }, 'Error publicando post');
 }
 
 // ==================== STATS ====================
 
 export async function fetchStats() {
-    const res = await fetch(`${API_BASE}/stats`, { headers: getAuthHeaders() });
-    if (!res.ok) throw new Error('Error cargando estadísticas');
-    return res.json();
+    return apiCall(`${API_BASE}/stats`, {}, 'Error cargando estadísticas');
 }
 
 // ==================== AI CONTENT ====================
 
 export async function generateContent({ tone, occasion, platform, products }) {
-    const res = await fetch(`${API_BASE}/generate`, {
+    return apiCall(`${API_BASE}/generate`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify({ tone, occasion, platform, products })
-    });
-    if (!res.ok) throw new Error('Error generando contenido');
-    return res.json();
+    }, 'Error generando contenido');
 }
 
 export async function getScheduleSuggestion() {
-    const res = await fetch(`${API_BASE}/schedule-suggestion`, { headers: getAuthHeaders() });
-    if (!res.ok) throw new Error('Error obteniendo sugerencia');
-    return res.json();
+    return apiCall(`${API_BASE}/schedule-suggestion`, {}, 'Error obteniendo sugerencia');
 }
 
 export async function generateImage({ product, style, generatedText, images }) {
-    const res = await fetch(`${API_BASE}/generate-image`, {
+    return apiCall(`${API_BASE}/generate-image`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify({ product, style, generatedText, images })
-    });
-    if (!res.ok) throw new Error('Error generando imagen');
-    return res.json();
+    }, 'Error generando imagen');
 }
 
 export async function generateDesign({ tone, occasion, platform, products, productCount }) {
-    const res = await fetch(`${API_BASE}/generate-design`, {
+    return apiCall(`${API_BASE}/generate-design`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify({ tone, occasion, platform, products, productCount })
-    });
-    if (!res.ok) throw new Error('Error generando diseño');
-    return res.json();
+    }, 'Error generando diseño');
 }
 
 // ==================== CONFIG ====================
 
 export async function fetchConfig() {
-    const res = await fetch(`${API_BASE}/config`, { headers: getAuthHeaders() });
-    if (!res.ok) throw new Error('Error cargando configuración');
-    return res.json();
+    return apiCall(`${API_BASE}/config`, {}, 'Error cargando configuración');
 }
 
 export async function updateConfig(config) {
-    const res = await fetch(`${API_BASE}/config`, {
+    return apiCall(`${API_BASE}/config`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
         body: JSON.stringify(config)
-    });
-    if (!res.ok) throw new Error('Error guardando configuración');
-    return res.json();
+    }, 'Error guardando configuración');
 }
 
 // ==================== REPORTS ====================
 
 export async function previewReport() {
-    const res = await fetch(`${API_BASE}/report/preview`, { headers: getAuthHeaders() });
-    if (!res.ok) throw new Error('Error cargando reporte');
-    return res.json();
+    return apiCall(`${API_BASE}/report/preview`, {}, 'Error cargando reporte');
 }
 
 export async function sendReport(channel, to) {
-    const res = await fetch(`${API_BASE}/report/send`, {
+    return apiCall(`${API_BASE}/report/send`, {
         method: 'POST',
-        headers: getAuthHeaders(),
         body: JSON.stringify({ channel, to })
-    });
-    if (!res.ok) throw new Error('Error enviando reporte');
-    return res.json();
+    }, 'Error enviando reporte');
 }

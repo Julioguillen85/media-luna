@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Bot, Loader2, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Bot, Loader2, MessageCircle } from 'lucide-react';
 import Navbar from './components/layout/Navbar';
 import HeroSection from './components/layout/HeroSection';
 import Footer from './components/layout/Footer';
@@ -15,12 +15,13 @@ import ToastNotification from './components/ui/ToastNotification';
 import EnhancedChatBot from './EnhancedChatBot';
 import CategoryToggle from './components/layout/CategoryToggle';
 import RentalProductCard from './components/rental/RentalProductCard';
-import CartSidebar from './components/cart/CartSidebar';
 import CheckoutForm from './components/cart/CheckoutForm';
 import CommunitySection from './components/community/CommunitySection';
+import SocialGallery from './components/community/SocialGallery';
 import MobileBottomNav from './components/layout/MobileBottomNav';
 import BulkOrderModal from './components/menu/BulkOrderModal';
 import DiscountTimer from './components/layout/DiscountTimer';
+import PWAInstallBanner from './components/layout/PWAInstallBanner';
 
 const DEMO_MODE = false;
 const API_URL = "/api";
@@ -63,7 +64,7 @@ import { authService } from './services/authService';
 import { isDiscountActive } from './lunitaUtils';
 
 export default function App() {
-  const { user, login: authLogin, logout: authLogout } = useAuth();
+  const { user, login: authLogin, logout: authLogout, loading: authLoading } = useAuth();
   const { requestPermission } = useNotification();
 
   const [view, setView] = useState(() => {
@@ -143,14 +144,15 @@ export default function App() {
 
   // Auto-detect /admin path and show login or go to admin
   useEffect(() => {
-    if (window.location.pathname === '/admin') {
-      if (isAdmin) {
+    if (!authLoading && window.location.pathname === '/admin') {
+      if (user) {
         setView('admin');
+        setShowLogin(false);
       } else {
         setShowLogin(true);
       }
     }
-  }, []);
+  }, [authLoading, user]);
 
   const handleLogin = async (u, p) => {
     const success = await authLogin(u, p);
@@ -496,83 +498,78 @@ export default function App() {
 
       <Navbar setView={setView} cart={cart} isAdmin={isAdmin} setIsAdmin={setIsAdmin} setShowLogin={setShowLogin} view={view} setIsCartModalOpen={setIsCartModalOpen} onLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
-      <main className="flex-grow max-w-6xl mx-auto px-4 py-8 relative z-10 w-full">
+      {view === 'home' && (
+        <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} />
+      )}
+
+      <main className={`flex-grow ${view === 'admin' ? 'w-full !p-0 !m-0 max-w-none' : 'max-w-6xl mx-auto px-4 py-8 relative'} z-10 w-full`}>
         {loading && <div className="fixed inset-0 bg-white/80 z-[60] flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-rose-500 mb-2" size={48} /></div>}
 
         {view === 'home' && (
           <>
-            <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} />
             <DiscountTimer />
 
             {/* Filtered Products for Customer View */}
             {(() => {
               const visibleProducts = products.filter(p => p.visible !== false);
               return (
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  {/* Main Content Area (Products) */}
-                  <div className="lg:col-span-2 space-y-8">
-                    <CategoryToggle activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
+                <div className="mt-8">
+                  <CategoryToggle activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
 
-                    {activeCategory === 'snacks' || activeCategory === 'drinks' ? (
-                      <ProductGrid
-                        products={visibleProducts.filter(p => p.productType === 'SNACK' || !p.productType)}
-                        categories={activeCategory === 'snacks' ? ['Snacks'] : ['Bebidas']}
-                        cart={cart}
-                        onProductClick={handleProductClick} removeFromCart={removeFromCart}
-                        activeCategory={activeCategory} setActiveCategory={setActiveCategory}
-                      />
-                    ) : (
-                      <ProductGrid
-                        products={visibleProducts.filter(p => p.productType === 'RENTAL' || p.category?.includes('Renta')).map(p => ({ ...p, category: 'Rentas' }))}
-                        categories={['Rentas']}
-                        cart={cart}
-                        onProductClick={handleProductClick} removeFromCart={removeFromCart}
-                        activeCategory={activeCategory} setActiveCategory={setActiveCategory}
-                      />
-                    )}
+                  <div className="mt-8 relative">
+                    {/* Main Content Area (Products) */}
+                    <div className="w-full space-y-8">
+                      {activeCategory === 'snacks' || activeCategory === 'drinks' ? (
+                        <ProductGrid
+                          products={visibleProducts.filter(p => p.productType === 'SNACK' || !p.productType)}
+                          categories={activeCategory === 'snacks' ? ['Snacks'] : ['Bebidas']}
+                          cart={cart}
+                          onProductClick={handleProductClick} removeFromCart={removeFromCart}
+                          activeCategory={activeCategory} setActiveCategory={setActiveCategory}
+                        />
+                      ) : (
+                        <ProductGrid
+                          products={visibleProducts.filter(p => p.productType === 'RENTAL' || p.category?.includes('Renta')).map(p => ({ ...p, category: 'Rentas' }))}
+                          categories={['Rentas']}
+                          cart={cart}
+                          onProductClick={handleProductClick} removeFromCart={removeFromCart}
+                          activeCategory={activeCategory} setActiveCategory={setActiveCategory}
+                        />
+                      )}
+                    </div>
                   </div>
-
-                  {/* Sidebar: Cart & Request Form (Static) */}
-                  <div className="lg:col-span-1">
-                    <CartSidebar
-                      cart={cart}
-                      removeFromCart={(id) => removeFromCart(id)}
-                      openBot={() => setIsBotOpen(true)}
-                      onCheckout={() => {
-                        if (window.innerWidth < 1024) {
-                          setIsCartModalOpen(false);
-                          setIsCheckoutModalOpen(true);
-                        } else {
-                          setIsCheckoutModalOpen(true);
-                        }
-                      }}
-                    />
+                  <div className="mt-8 animate-fade-in space-y-8">
+                    <SocialGallery />
                     <CommunitySection />
                   </div>
                 </div>
               );
             })()}
           </>
-        )}
+        )
+        }
 
         {view === 'confirmation' && lastOrder && <ConfirmationView order={lastOrder} onBack={() => setView('home')} />}
 
         {view === 'admin' && isAdmin && (
-          <AdminDashboard
-            products={products}
-            categories={categories}
-            orders={orders}
-            options={options}
-            onSaveProduct={handleSaveProduct}
-            onDeleteProduct={handleDeleteProduct}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
-            onDeleteOrder={handleDeleteOrder}
-            onSaveOptions={handleSaveOptions}
-            onSaveInventory={handleSaveInventory}
-            onLogout={handleLogout}
-            isSidebarOpen={isSidebarOpen}
-            setIsSidebarOpen={setIsSidebarOpen}
-          />
+          <div className="w-full h-full">
+            <AdminDashboard
+              products={products}
+              categories={categories}
+              orders={orders}
+              options={options}
+              onSaveProduct={handleSaveProduct}
+              onDeleteProduct={handleDeleteProduct}
+              onUpdateOrderStatus={handleUpdateOrderStatus}
+              onDeleteOrder={handleDeleteOrder}
+              onSaveOptions={handleSaveOptions}
+              onSaveInventory={handleSaveInventory}
+              onLogout={handleLogout}
+              isSidebarOpen={isSidebarOpen}
+              setIsSidebarOpen={setIsSidebarOpen}
+              setView={setView}
+            />
+          </div>
         )}
       </main>
 
@@ -581,14 +578,14 @@ export default function App() {
       {/* Floating Buttons */}
       {cart.length > 0 && (
         <button onClick={() => setIsCartModalOpen(true)} className="fixed max-md:bottom-[96px] md:bottom-6 right-6 z-40 bg-gradient-to-r from-rose-500 to-rose-600 text-white p-4 rounded-full shadow-2xl hover:shadow-rose-300 transition-all hover:scale-110 active:scale-95">
-          <ShoppingBag size={24} />
+          <ShoppingCart size={24} />
           <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-pulse">{cart.length}</span>
         </button>
       )}
 
 
       {view !== 'admin' && !isBotOpen && (
-        <div className={`fixed z-40 transition-all duration-500 ease-in-out right-6 ${cart.length > 0 ? 'max-md:bottom-[170px] md:bottom-28' : 'max-md:bottom-[96px] md:bottom-6'}`}>
+        <div className={`fixed z-40 transition-all duration-500 ease-in-out right-10 ${cart.length > 0 ? 'max-md:bottom-[170px] md:bottom-28' : 'max-md:bottom-[96px] md:bottom-6'}`}>
           <button onClick={() => setIsBotOpen(true)} className="bg-slate-900 dark:bg-black text-white p-3 md:p-4 rounded-full shadow-2xl hover:shadow-rose-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center relative animate-shake">
             {/* Tooltip flotante con fondo transparente */}
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-800 dark:text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 cursor-pointer whitespace-nowrap">

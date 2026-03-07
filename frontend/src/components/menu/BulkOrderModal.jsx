@@ -21,6 +21,7 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
     const isRental = product?.category?.includes('Renta') || product?.productType === 'RENTAL';
     const minCount = isRental ? 1 : 30;
     const maxCount = isBrincolin ? 2 : 9999;
+    const step = isRental ? 1 : 10;
 
     const handleConfirm = () => {
         const mc = isRental ? 1 : 30;
@@ -55,7 +56,7 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
 
                     <div className="flex items-center gap-6">
                         <button
-                            onClick={() => setPeopleCount(Math.max(minCount, numericCount - 1).toString())}
+                            onClick={() => setPeopleCount(Math.max(minCount, numericCount - step).toString())}
                             disabled={numericCount <= minCount}
                             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${numericCount <= minCount
                                 ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'
@@ -87,7 +88,7 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
                         </div>
 
                         <button
-                            onClick={() => setPeopleCount(Math.min(maxCount, numericCount + 1).toString())}
+                            onClick={() => setPeopleCount(Math.min(maxCount, numericCount + step).toString())}
                             disabled={numericCount >= maxCount}
                             className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${numericCount >= maxCount
                                 ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed'

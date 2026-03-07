@@ -10,6 +10,7 @@ import com.medialuna.snackbar.service.SalesReportService;
 import com.medialuna.snackbar.service.SocialMediaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/marketing")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class MarketingController {
 
     @Autowired

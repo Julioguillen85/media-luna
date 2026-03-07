@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ShoppingBag, Sparkles, Utensils, CupSoda, CheckCircle, Bot, MapPin, Image as ImageIcon } from 'lucide-react';
+import React from 'react';
+import { ShoppingCart, Sparkles, Utensils, CupSoda, CheckCircle, Bot, MapPin, Image as ImageIcon } from 'lucide-react';
 import ProductCard from './ProductCard';
 
 const CATEGORIES = ['snacks', 'drinks', 'rental'];
@@ -13,39 +13,8 @@ export default function ProductGrid({
     activeCategory,
     setActiveCategory
 }) {
-    const touchStartX = useRef(0);
-    const touchEndX = useRef(0);
-    const hasMoved = useRef(false);
-
-    const handleSwipe = () => {
-        if (!hasMoved.current) return; // ignore simple taps
-        const diff = touchStartX.current - touchEndX.current;
-        if (Math.abs(diff) > 80 && activeCategory && setActiveCategory) {
-            const idx = CATEGORIES.indexOf(activeCategory);
-            if (diff > 0 && idx < CATEGORIES.length - 1) {
-                setActiveCategory(CATEGORIES[idx + 1]);
-            } else if (diff < 0 && idx > 0) {
-                setActiveCategory(CATEGORIES[idx - 1]);
-            }
-        }
-        hasMoved.current = false;
-    };
-
     return (
-        <div
-            className="space-y-10"
-            onTouchStart={(e) => {
-                touchStartX.current = e.touches[0].clientX;
-                touchEndX.current = e.touches[0].clientX;
-                hasMoved.current = false;
-            }}
-            onTouchMove={(e) => {
-                touchEndX.current = e.touches[0].clientX;
-                const diff = Math.abs(touchStartX.current - touchEndX.current);
-                if (diff > 10) hasMoved.current = true;
-            }}
-            onTouchEnd={handleSwipe}
-        >
+        <div className="space-y-10">
             <div id="products" className="space-y-10">
                 {categories.map(cat => {
                     let catProducts = products.filter(p => p.category === cat);
@@ -80,7 +49,7 @@ export default function ProductGrid({
                                 <div className="h-[1px] flex-1 bg-gradient-to-r from-rose-200 via-slate-200 to-transparent dark:from-rose-900/50 dark:via-slate-800 dark:to-transparent ml-4 transition-colors duration-300" />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 xl:gap-6">
                                 {catProducts.map(product => (
                                     <ProductCard
                                         key={product.id}

@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class MercadoPagoService {
 
@@ -34,12 +36,15 @@ public class MercadoPagoService {
         headers.set("Authorization", "Bearer " + accessToken);
         headers.set("Content-Type", "application/json");
 
-        // Calculate 50% down payment
-        double depositAmount = Math.round((order.getTotal() * 0.5) * 100.0) / 100.0;
+        // Require a 500 MXN down payment to reserve the date
+        double depositAmount = 500.0;
+        if (order.getTotal() < 500.0) {
+            depositAmount = order.getTotal();
+        }
 
         // Item description
         Map<String, Object> item = new HashMap<>();
-        item.put("title", "Anticipo 50% - Apartado de Fecha (Pedido #"
+        item.put("title", "Anticipo $500 - Apartado de Fecha (Pedido #"
                 + (order.getId() != null ? order.getId() : "Pendiente") + ")");
         item.put("description", "Anticipo de servicios de Lunita para el evento el día " + order.getDate());
         item.put("quantity", 1);
@@ -77,8 +82,7 @@ public class MercadoPagoService {
                 return (String) response.getBody().get("init_point");
             }
         } catch (Exception e) {
-            System.err.println("Error generating MercadoPago link: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error generating MercadoPago link", e);
         }
 
         return null;

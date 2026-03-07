@@ -8,11 +8,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
 import jakarta.annotation.PostConstruct;
 import java.security.Security;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
@@ -46,17 +48,14 @@ public class NotificationController {
     }
 
     @PostMapping("/test")
-    public void sendTestNotification(@RequestBody PushSubscription subscription) {
-        try {
-            Notification notification = new Notification(
-                    subscription.getEndpoint(),
-                    subscription.getP256dh(),
-                    subscription.getAuth(),
-                    "{\"title\": \"Test Notification\", \"body\": \"This is a test notification from Snackbar!\"}"
-                            .getBytes());
-            pushService.send(notification);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void sendTestNotification(@RequestBody PushSubscription subscription) throws Exception {
+        log.info("Sending test push notification to endpoint: {}", subscription.getEndpoint());
+        Notification notification = new Notification(
+                subscription.getEndpoint(),
+                subscription.getP256dh(),
+                subscription.getAuth(),
+                "{\"title\": \"Test Notification\", \"body\": \"This is a test notification from Snackbar!\"}"
+                        .getBytes());
+        pushService.send(notification);
     }
 }

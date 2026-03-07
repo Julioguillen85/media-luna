@@ -5,9 +5,11 @@ import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+@Slf4j
 @Service
 public class ImageGenerationService {
 
@@ -87,8 +89,8 @@ public class ImageGenerationService {
             String url = GEMINI_URL + "?key=" + apiKey;
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            System.out.println("🖼️ Generando banner con Gemini (" + GEMINI_MODEL + ")...");
-            System.out.println("📸 Fotos de referencia: " + (imageDataList != null ? imageDataList.size() : 0));
+            log.info("🖼️ Generando banner con Gemini ({})...", GEMINI_MODEL);
+            log.info("📸 Fotos de referencia: {}", imageDataList != null ? imageDataList.size() : 0);
 
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
@@ -105,7 +107,7 @@ public class ImageGenerationService {
                                     String imageBase64 = (String) inline.get("data");
                                     String responseMime = (String) inline.get("mimeType");
                                     if (imageBase64 != null) {
-                                        System.out.println("✅ Banner generado exitosamente con Gemini");
+                                        log.info("✅ Banner generado exitosamente con Gemini");
                                         // Return as data URL for frontend display
                                         String mime = responseMime != null ? responseMime : "image/png";
                                         return "data:" + mime + ";base64," + imageBase64;
@@ -118,7 +120,7 @@ public class ImageGenerationService {
             }
             throw new RuntimeException("Gemini no generó imagen. Verifica tu prompt e inténtalo de nuevo.");
         } catch (Exception e) {
-            System.err.println("❌ Error generando banner Gemini: " + e.getMessage());
+            log.error("❌ Error generando banner Gemini", e);
             throw new RuntimeException("Error generando banner: " + e.getMessage(), e);
         }
     }

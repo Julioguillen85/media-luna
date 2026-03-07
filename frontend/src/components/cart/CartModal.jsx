@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, X, Trash2, FileText } from 'lucide-react';
+import { ShoppingCart, X, Trash2, FileText } from 'lucide-react';
 
 export default function CartModal({ cart, onClose, removeFromCart, onContinueCheckout }) {
     return (
@@ -7,7 +7,7 @@ export default function CartModal({ cart, onClose, removeFromCart, onContinueChe
             <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl dark:shadow-rose-900/20 transition-colors duration-300 overflow-hidden">
                 <div className="p-5 border-b dark:border-slate-800/50 flex justify-between items-center bg-gradient-to-r from-rose-50 to-amber-50 dark:from-slate-950 dark:to-indigo-950 transition-colors duration-500">
                     <h3 className="font-bold text-xl flex items-center gap-2 text-slate-900 dark:text-white transition-colors duration-300">
-                        <ShoppingBag className="text-rose-500 dark:text-rose-400" size={24} />
+                        <ShoppingCart className="text-rose-500 dark:text-rose-400" size={24} />
                         Tu Pedido ({cart.length})
                     </h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-full transition">
@@ -18,7 +18,7 @@ export default function CartModal({ cart, onClose, removeFromCart, onContinueChe
                     {cart.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors duration-300">
-                                <ShoppingBag className="text-slate-300 dark:text-slate-600 transition-colors duration-300" size={32} />
+                                <ShoppingCart className="text-slate-300 dark:text-slate-600 transition-colors duration-300" size={32} />
                             </div>
                             <p className="text-slate-400 dark:text-slate-500 font-medium transition-colors duration-300">Tu carrito está vacío</p>
                             <p className="text-xs text-slate-300 dark:text-slate-600 mt-2 transition-colors duration-300">Agrega productos para continuar</p>

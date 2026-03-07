@@ -9,7 +9,9 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class GeminiService {
 
@@ -169,8 +171,7 @@ public class GeminiService {
             return "Lo siento, tuve un problema procesando tu mensaje. ¿Puedes intentar de nuevo? 😅";
 
         } catch (Exception e) {
-            System.err.println("Error al llamar a Gemini API: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error al llamar a Gemini API", e);
             return "Ups, tuve un problema técnico 🙈 ¿Me repites lo que necesitas?";
         }
     }

@@ -5,6 +5,8 @@ import com.medialuna.snackbar.model.Product;
 import com.medialuna.snackbar.model.PriceTier;
 import com.medialuna.snackbar.repository.OptionsRepository;
 import com.medialuna.snackbar.repository.ProductRepository;
+import com.medialuna.snackbar.model.GalleryImage;
+import com.medialuna.snackbar.repository.GalleryImageRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +16,25 @@ import java.util.List;
 @Configuration
 public class DatabaseSeeder {
         @Bean
-        CommandLineRunner initDatabase(ProductRepository productRepo, OptionsRepository optionsRepo) {
+        CommandLineRunner initDatabase(ProductRepository productRepo, OptionsRepository optionsRepo,
+                        GalleryImageRepository galleryRepo) {
                 return args -> {
+                        if (galleryRepo.count() == 0) {
+                                String[] defaultPhotos = {
+                                                "/images/tostilocos.jpeg",
+                                                "/images/bowl_un_medio.jpeg",
+                                                "/images/michelada.jpeg",
+                                                "/images/waffles.jpeg",
+                                                "/images/duro_preparado.jpeg",
+                                                "/images/azulito.jpeg"
+                                };
+                                for (String url : defaultPhotos) {
+                                        GalleryImage img = new GalleryImage();
+                                        img.setUrl(url);
+                                        img.setCreatedAt(java.time.Instant.now().toString());
+                                        galleryRepo.save(img);
+                                }
+                        }
                         if (optionsRepo.count() == 0) {
                                 IngredientOptions opts = new IngredientOptions();
                                 opts.setId(1L);

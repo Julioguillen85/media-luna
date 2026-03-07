@@ -7,6 +7,8 @@ import com.medialuna.snackbar.service.WhatsAppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import lombok.extern.slf4j.Slf4j;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class ApiController {
@@ -26,6 +29,8 @@ public class ApiController {
     private OrderItemRepository orderItemRepository;
     @Autowired
     private OptionsRepository optionsRepository;
+    @Autowired
+    private GalleryImageRepository galleryImageRepository;
     @Autowired
     private WhatsAppService whatsAppService;
     @Autowired
@@ -45,6 +50,31 @@ public class ApiController {
     public Product saveProduct(@RequestBody Product product) {
         return productRepository.save(product);
     }
+
+    // --- Gallery Endpoints ---
+    @GetMapping("/gallery")
+    public List<GalleryImage> getGalleryImages() {
+        return galleryImageRepository.findAllByOrderByIdDesc();
+    }
+
+    @PostMapping("/gallery")
+    public GalleryImage saveGalleryImage(@RequestBody GalleryImage image) {
+        if (image.getCreatedAt() == null) {
+            image.setCreatedAt(java.time.Instant.now().toString());
+        }
+        return galleryImageRepository.save(image);
+    }
+
+    @DeleteMapping("/gallery/{id}")
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> deleteGalleryImage(@PathVariable("id") Long id) {
+        return galleryImageRepository.findById(id).map(img -> {
+            galleryImageRepository.deleteById(id);
+            return ResponseEntity.ok().body(Map.of("message", "Imagen eliminada"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+    // ------------------------
 
     @PutMapping("/orders/{id}/status")
     @Transactional
@@ -68,7 +98,7 @@ public class ApiController {
                         emailService.sendOrderCompletedEmail(order);
                     }
                 } catch (Exception e) {
-                    System.err.println("Error enviando email al cliente: " + e.getMessage());
+                    log.error("Error enviando email al cliente: ", e);
                 }
             });
 
@@ -78,8 +108,9 @@ public class ApiController {
 
     @DeleteMapping("/products/{id}")
     @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> deleteProduct(@PathVariable("id") Long id) {
-        System.out.println("Solicitando eliminación de producto ID: " + id);
+        log.info("Solicitando eliminación de producto ID: {}", id);
 
         // Buscar el producto usando Optional
         Optional<Product> productOptional = productRepository.findById(id);
@@ -89,18 +120,17 @@ public class ApiController {
             try {
                 // Desvincular de órdenes
                 orderItemRepository.detachProduct(id);
-                System.out.println("Productos desvinculados de órdenes.");
+                log.info("Productos desvinculados de órdenes.");
 
                 // Eliminar producto
                 productRepository.deleteById(id);
-                System.out.println("Producto eliminado correctamente: " + id);
+                log.info("Producto eliminado correctamente: {}", id);
 
                 return ResponseEntity.ok()
                         .body(Map.of("message", "Producto eliminado correctamente"));
 
             } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("ERROR al eliminar: " + e.getMessage());
+                log.error("ERROR al eliminar producto {}: ", id, e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("error", "Error al eliminar producto"));
             }
@@ -131,7 +161,7 @@ public class ApiController {
         }
         CustomerOrder saved = orderRepository.save(order);
 
-        // Generate MP Payment Link for 50% deposit
+        // Generate MP Payment Link for $500 MXN deposit
         try {
             String paymentLink = mercadoPagoService.generatePaymentLink(saved);
             if (paymentLink != null) {
@@ -139,7 +169,7 @@ public class ApiController {
                 saved = orderRepository.save(saved);
             }
         } catch (Exception e) {
-            System.err.println("Warning: Could not generation MP Payment link: " + e.getMessage());
+            log.warn("Warning: Could not generation MP Payment link", e);
         }
 
         whatsAppService.sendOrderNotification(saved);
@@ -148,13 +178,13 @@ public class ApiController {
         try {
             emailService.sendOrderNotification(saved); // Admin email
         } catch (Exception e) {
-            System.err.println("Error sending email: " + e.getMessage());
+            log.error("Error sending admin email notification", e);
         }
 
         try {
             pushNotificationService.sendOrderNotification(saved);
         } catch (Exception e) {
-            System.err.println("Error sending push: " + e.getMessage());
+            log.error("Error sending push notification", e);
         }
 
         return saved;
@@ -187,7 +217,11 @@ public class ApiController {
                     new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                             creds.get("username"), creds.get("password")));
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            log.warn("Login failed for user: {}", creds.get("username"));
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect username or password");
+        } catch (Exception e) {
+            log.error("Unexpected error during login", e);
+            throw e; // Let global handler pick it up
         }
 
         final org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService

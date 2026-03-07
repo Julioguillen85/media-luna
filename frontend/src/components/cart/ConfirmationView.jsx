@@ -34,7 +34,11 @@ export default function ConfirmationView({ order, onBack }) {
                 }
                 if (item.quantity > 0) {
                     if (isRentalItem) text += ` (x${item.quantity})`;
-                    else text += item.quantity === 1 ? ` (Para 1 persona)` : ` (Para ${item.quantity} personas)`;
+                    else {
+                        text += item.quantity === 1 ? ` (Para 1 persona)` : ` (Para ${item.quantity} personas)`;
+                        const durationText = item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos';
+                        text += `\n     ⏱️ Servicio de ${durationText}`;
+                    }
                 }
                 text += '\n';
                 if (item.customization.bases && item.customization.bases.length > 0) text += `     Base: ${item.customization.bases.join(', ')}\n`;
@@ -45,7 +49,9 @@ export default function ConfirmationView({ order, onBack }) {
             if (isRentalItem) {
                 return item.quantity > 1 ? `• ${itemName} (x${item.quantity}) - $${item.totalPrice}` : `• ${itemName} - $${item.totalPrice}`;
             }
-            return `• ${itemName} ${item.quantity === 1 ? '(Para 1 persona)' : `(Para ${item.quantity || 1} personas)`} - $${item.totalPrice}`;
+
+            const durationText = item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos';
+            return `• ${itemName} ${item.quantity === 1 ? '(Para 1 persona)' : `(Para ${item.quantity || 1} personas)`}\n     ⏱️ Servicio de ${durationText}\n     - $${item.totalPrice}`;
         }).join('\n\n');
     }
 
@@ -66,39 +72,28 @@ export default function ConfirmationView({ order, onBack }) {
     const waMessage = `🌙 *PEDIDO MEDIA LUNA SNACK BAR*\n\n👤 *Cliente:* ${order.customer}\n📱 *WhatsApp:* ${order.phone}\n📍 *Lugar:* ${order.eventLocation}\n📅 *Fecha:* ${order.date}\n🕐 *Hora:* ${order.time}\n\n📦 *PRODUCTOS:*\n${itemsText}${pricingText}\n\n💬 Acabo de hacer esta solicitud en la página. Me gustaría consultar la disponibilidad. ¡Gracias! 😊`;
     const waLink = `https://wa.me/${BUSINESS_PHONE}?text=${encodeURIComponent(waMessage)}`;
 
-    // Helper to format string time "14:00" or "02:00 PM" into "02:00 PM a 04:00 PM"
-    const formatTimeRange = (timeStr) => {
+    // Helper to format string time "14:00" into "02:00 PM"
+    const formatTime = (timeStr) => {
         if (!timeStr) return '';
-        // If it already contains 'a', we assume it's already formatted
-        if (timeStr.includes(' a ')) return timeStr;
+        if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) return timeStr;
 
-        // Parse the start time
         let rawHours = 0;
         let rawMinutes = 0;
 
         if (timeStr.includes(':')) {
             const parts = timeStr.split(':');
             rawHours = parseInt(parts[0], 10);
-            rawMinutes = parseInt(parts[1].split(' ')[0], 10); // handles "14:30" or "02:30 PM"
-            if (timeStr.toLowerCase().includes('pm') && rawHours < 12) rawHours += 12;
-            if (timeStr.toLowerCase().includes('am') && rawHours === 12) rawHours = 0;
+            rawMinutes = parseInt(parts[1].split(' ')[0], 10);
         }
 
-        const formatAMPM = (h, m) => {
-            const isPM = h >= 12;
-            const hour12 = h % 12 || 12;
-            const hStr = hour12.toString().padStart(2, '0');
-            const mStr = m.toString().padStart(2, '0');
-            return `${hStr}:${mStr} ${isPM ? 'PM' : 'AM'}`;
-        };
-
-        const startTime = formatAMPM(rawHours, rawMinutes);
-        const endTime = formatAMPM((rawHours + 2) % 24, rawMinutes);
-
-        return `${startTime} a ${endTime}`;
+        const isPM = rawHours >= 12;
+        const hour12 = rawHours % 12 || 12;
+        const hStr = hour12.toString().padStart(2, '0');
+        const mStr = rawMinutes.toString().padStart(2, '0');
+        return `${hStr}:${mStr} ${isPM ? 'PM' : 'AM'}`;
     };
 
-    const displayTime = formatTimeRange(order.time);
+    const displayTime = formatTime(order.time);
 
     return (
         <div className="flex flex-col items-center justify-center pt-8 px-4 pb-12 animate-fade-in">
@@ -140,6 +135,9 @@ export default function ConfirmationView({ order, onBack }) {
                                 <div key={idx} className="flex justify-between items-start text-sm">
                                     <div className="flex-1 pr-4">
                                         <span className="font-semibold text-slate-700">{item.quantity}x {item.name || item.product?.name}</span>
+                                        {(!item.isRental && !item.category?.includes('Renta') && item.productType !== 'RENTAL' && !/tablón|tablon|mesa|silla|brincolín/i.test(item.name || item.product?.name || '')) && (
+                                            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-300 mt-0.5">⏱️ Servicio de {item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos'}</p>
+                                        )}
                                         {item.customization && (
                                             <div className="text-[11px] text-slate-500 mt-0.5 leading-tight space-y-0.5">
                                                 {item.customization.size && (
