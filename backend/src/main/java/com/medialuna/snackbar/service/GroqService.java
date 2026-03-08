@@ -16,13 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class GroqService {
 
-        @Value("${groq.api.key}")
+        @Value("${groq.api.key:DISABLED}")
         private String apiKey;
 
-        @Value("${groq.api.url}")
+        @Value("${groq.api.url:https://api.groq.com/openai/v1/chat/completions}")
         private String apiUrl;
 
-        @Value("${groq.model}")
+        @Value("${groq.model:llama-3.3-70b-versatile}")
         private String model;
 
         private final RestTemplate restTemplate;
