@@ -8,6 +8,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
 @Service
@@ -22,6 +23,7 @@ public class EmailService {
     @org.springframework.beans.factory.annotation.Value("${admin.email:medialuna.frutibar@gmail.com}")
     private String adminEmail;
 
+    @Async
     public void sendOrderNotification(CustomerOrder order) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -197,6 +199,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendOrderConfirmedEmail(CustomerOrder order) {
         if (order.getEmail() == null || order.getEmail().trim().isEmpty() || order.getEmail().equalsIgnoreCase("N/A")) {
             return; // No email provided
@@ -387,6 +390,7 @@ public class EmailService {
         }
     }
 
+    @Async
     public void sendOrderCompletedEmail(CustomerOrder order) {
         if (order.getEmail() == null || order.getEmail().trim().isEmpty() || order.getEmail().equalsIgnoreCase("N/A")) {
             return;
@@ -428,6 +432,7 @@ public class EmailService {
     /**
      * Send a weekly sales report via email with HTML formatting
      */
+    @Async
     public void sendWeeklyReport(String htmlReport, String toEmail) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
