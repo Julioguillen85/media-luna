@@ -1,9 +1,6 @@
 -- Make sure to clear existing data before seeding to avoid duplicates
 DELETE FROM price_tiers;
-DELETE FROM order_item_toppings;
-DELETE FROM order_item_complements;
-DELETE FROM order_item_bases;
-DELETE FROM order_items;
+
 DELETE FROM ingredient_options_toppings;
 DELETE FROM ingredient_options_complements;
 DELETE FROM ingredient_options_bases;
