@@ -14,6 +14,7 @@ import java.security.Security;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.scheduling.annotation.Async;
 
 @Service
 public class PushNotificationService {
@@ -62,6 +63,7 @@ public class PushNotificationService {
         subscriptionRepository.findByEndpoint(endpoint).ifPresent(sub -> subscriptionRepository.delete(sub));
     }
 
+    @Async
     public void sendOrderNotification(com.medialuna.snackbar.model.CustomerOrder order) {
         NumberFormat mxnFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
         double total = order.getTotal() != null ? order.getTotal() : 0.0;
@@ -76,6 +78,7 @@ public class PushNotificationService {
         }
     }
 
+    @Async
     public void sendTestNotification() {
         String payload = "{\"title\":\"Prueba de Notificación\",\"body\":\"¡Las notificaciones Push funcionan correctamente en Media Luna!\",\"icon\":\"/icons/icon-192.png\",\"url\":\"/admin\"}";
         List<PushSubscription> owners = subscriptionRepository.findByRole("owner");
