@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Image as ImageIcon, Facebook, Heart, X, ChevronDown, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 
 const FACEBOOK_PAGE_URL = "https://www.facebook.com/medialuna.frutibar";
-const API_URL = "/api";
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
 
 export default function SocialGallery() {
     const [images, setImages] = useState([]);

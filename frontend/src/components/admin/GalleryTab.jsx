@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
 
-const API_URL = "/api";
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
 
 export default function GalleryTab() {
     const [images, setImages] = useState([]);
