@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import jakarta.annotation.PostConstruct;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,28 +29,6 @@ public class GroqService {
 
         public GroqService() {
                 this.restTemplate = new RestTemplate();
-        }
-
-        @PostConstruct
-        public void init() {
-                log.info("=== DEBUGGING RAILWAY ENV VARS ===");
-                System.getenv().forEach((k, v) -> {
-                        if (k.contains("GROQ") || k.contains("API") || k.contains("KEY")) {
-                                log.info("FOUND ENV VAR: {} = (hidden)", k);
-                        }
-                });
-
-                if (apiKey == null || apiKey.trim().isEmpty()) {
-                        log.error("=========================================");
-                        log.error("🚨 Groq API Key (from ENV) is MISSING or EMPTY!");
-                        log.error("=========================================");
-                } else {
-                        log.info("=========================================");
-                        log.info("✅ Groq API Key injected successfully!");
-                        log.info("🔑 Length: {}", apiKey.length());
-                        log.info("🔑 Starts with: {}", apiKey.length() >= 4 ? apiKey.substring(0, 4) : "???");
-                        log.info("=========================================");
-                }
         }
 
         /**
