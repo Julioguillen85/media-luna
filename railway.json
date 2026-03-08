@@ -5,7 +5,7 @@
         "dockerfilePath": "backend/Dockerfile"
     },
     "deploy": {
-        "startCommand": "java -Dspring.profiles.active=prod -Dspring.datasource.url=jdbc:postgresql://postgres.railway.internal:5432/railway -Dspring.datasource.username=postgres -Dspring.datasource.password=WNPWcDoPOAUdwNzCgjTwNZTebmaQAPpK -Dvapid.public.key=BP12x0L6TPDSz3uiqlagjJd-pqHZU0AQiDEjYnNLvRf2-eKj6xPDFqDXMRTUMlShm3-4LrLcZCk1z7Wse4coJiY -Dvapid.private.key=0RFhAiscYINWSFDuJ9l21005FxVEFEEyEOV8MVxuPtk -Dvapid.subject=mailto:medialuna@gmail.com -Dspring.mail.username=soportemedialuna@gmail.com -Dspring.mail.password=mcskyhcyeflbhsst -Dadmin.email=medialuna.frutibar@gmail.com -Dreport.owner.email=medialuna.frutibar@gmail.com -Dgroq.api.key=${GROQ_API_KEY} -jar /app/app.jar",
+        "startCommand": "java -Dspring.profiles.active=prod -Dspring.datasource.url=jdbc:postgresql://postgres.railway.internal:5432/railway -Dspring.datasource.username=postgres -Dspring.datasource.password=WNPWcDoPOAUdwNzCgjTwNZTebmaQAPpK -Dvapid.public.key=BP12x0L6TPDSz3uiqlagjJd-pqHZU0AQiDEjYnNLvRf2-eKj6xPDFqDXMRTUMlShm3-4LrLcZCk1z7Wse4coJiY -Dvapid.private.key=0RFhAiscYINWSFDuJ9l21005FxVEFEEyEOV8MVxuPtk -Dvapid.subject=mailto:medialuna@gmail.com -Dspring.mail.username=soportemedialuna@gmail.com -Dspring.mail.password=mcskyhcyeflbhsst -Dadmin.email=medialuna.frutibar@gmail.com -Dreport.owner.email=medialuna.frutibar@gmail.com -jar /app/app.jar",
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 5
     }
