@@ -17,6 +17,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -30,29 +36,40 @@ public class SecurityConfig {
     private CustomUserDetailsService userDetailsService;
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://*.vercel.app",
+                "https://media-luna-production.up.railway.app"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for REST API
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/login").permitAll()
                         .requestMatchers("/api/notifications/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/options").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").permitAll()
-                        .requestMatchers("/api/chat").permitAll() // Allow Chatbot
+                        .requestMatchers("/api/chat").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/upload").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/gallery").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/orders/*/status").permitAll() // Allow
-                                                                                                                      // status
-                                                                                                                      // updates
-                                                                                                                      // for
-                                                                                                                      // now
-                                                                                                                      // or
-                                                                                                                      // restrict?
-                        // Actually, status updates are an admin action usually.
-                        // But if we block it, current App.jsx logic will fail unless logged in.
-                        // I will restrict everything else to authenticated users.
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/orders/*/status").permitAll()
+                        .requestMatchers("/api/push/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
