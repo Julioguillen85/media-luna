@@ -34,6 +34,13 @@ public class GroqService {
 
         @PostConstruct
         public void init() {
+                log.info("=== DEBUGGING RAILWAY ENV VARS ===");
+                System.getenv().forEach((k, v) -> {
+                        if (k.contains("GROQ") || k.contains("API") || k.contains("KEY")) {
+                                log.info("FOUND ENV VAR: {} = (hidden)", k);
+                        }
+                });
+
                 if (apiKey == null || apiKey.trim().isEmpty()) {
                         log.error("=========================================");
                         log.error("🚨 Groq API Key (from ENV) is MISSING or EMPTY!");
