@@ -8,6 +8,7 @@ DELETE FROM ingredient_options_toppings;
 DELETE FROM ingredient_options_complements;
 DELETE FROM ingredient_options_bases;
 DELETE FROM ingredient_options;
+DELETE FROM product_gallery;
 DELETE FROM products;
 INSERT INTO public.ingredient_options (id) VALUES (1);
 INSERT INTO public.ingredient_options_bases (ingredient_options_id, bases) VALUES (1, 'Sabritas naturales');
