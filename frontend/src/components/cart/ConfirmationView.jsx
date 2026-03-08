@@ -127,35 +127,35 @@ export default function ConfirmationView({ order, onBack }) {
 
                     {/* Order Summary */}
                     <div className="mb-6">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-2">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-2">
                             <Receipt size={16} className="text-rose-500" /> Resumen del Pedido
                         </h3>
                         <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                             {(order.items || []).map((item, idx) => (
                                 <div key={idx} className="flex justify-between items-start text-sm">
                                     <div className="flex-1 pr-4">
-                                        <span className="font-semibold text-slate-700 dark:text-slate-300">{item.quantity}x {item.name || item.product?.name}</span>
+                                        <span className="font-semibold text-slate-700 dark:text-white">{item.quantity}x {item.name || item.product?.name}</span>
                                         {(!item.isRental && !item.category?.includes('Renta') && item.productType !== 'RENTAL' && !/tablón|tablon|mesa|silla|brincolín/i.test(item.name || item.product?.name || '')) && (
-                                            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-0.5">⏱️ Servicio de {item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos'}</p>
+                                            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-300 mt-0.5">⏱️ Servicio de {item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos'}</p>
                                         )}
                                         {item.customization && (
-                                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight space-y-0.5">
+                                            <div className="text-[11px] text-slate-500 dark:text-slate-300 mt-0.5 leading-tight space-y-0.5">
                                                 {item.customization.size && (
-                                                    <p><strong className="text-slate-600 dark:text-slate-300">Tamaño:</strong> {item.customization.size === 'quarter' ? 'Bowl 1/4' : item.customization.size === 'half' ? 'Bowl 1/2' : item.customization.size}</p>
+                                                    <p><strong className="text-slate-600 dark:text-white">Tamaño:</strong> {item.customization.size === 'quarter' ? 'Bowl 1/4' : item.customization.size === 'half' ? 'Bowl 1/2' : item.customization.size}</p>
                                                 )}
                                                 {item.customization.bases && item.customization.bases.length > 0 && (
-                                                    <p><strong className="text-slate-600 dark:text-slate-300">Base:</strong> {item.customization.bases.join(', ')}</p>
+                                                    <p><strong className="text-slate-600 dark:text-white">Base:</strong> {item.customization.bases.join(', ')}</p>
                                                 )}
                                                 {item.customization.complements && item.customization.complements.length > 0 && (
-                                                    <p><strong className="text-slate-600 dark:text-slate-300">Comp:</strong> {item.customization.complements.join(', ')}</p>
+                                                    <p><strong className="text-slate-600 dark:text-white">Comp:</strong> {item.customization.complements.join(', ')}</p>
                                                 )}
                                                 {item.customization.toppings && item.customization.toppings.length > 0 && (
-                                                    <p><strong className="text-slate-600 dark:text-slate-300">Top:</strong> {item.customization.toppings.join(', ')}</p>
+                                                    <p><strong className="text-slate-600 dark:text-white">Top:</strong> {item.customization.toppings.join(', ')}</p>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                    <span className="font-medium text-slate-600 dark:text-slate-300">${item.totalPrice?.toLocaleString('es-MX')}</span>
+                                    <span className="font-medium text-slate-600 dark:text-white">${item.totalPrice?.toLocaleString('es-MX')}</span>
                                 </div>
                             ))}
                         </div>
@@ -165,7 +165,7 @@ export default function ConfirmationView({ order, onBack }) {
                     <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 space-y-2 mb-6">
                         {discountApplies && snackSubtotal > 0 ? (
                             <>
-                                <div className="flex justify-between items-center text-sm font-semibold text-slate-500 dark:text-slate-400 line-through decoration-slate-400/50 mb-2">
+                                <div className="flex justify-between items-center text-sm font-semibold text-slate-500 dark:text-slate-300 line-through decoration-slate-400/50 mb-2">
                                     <span>Total regular</span>
                                     <span>${subtotal.toLocaleString('es-MX')} MXN</span>
                                 </div>
