@@ -97,7 +97,7 @@ export default function ConfirmationView({ order, onBack }) {
 
     return (
         <div className="flex flex-col items-center justify-center pt-8 px-4 pb-12 animate-fade-in">
-            <div className="glass-panel w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-100">
+            <div className="glass-panel w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 dark:bg-slate-900">
                 {/* Header */}
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 text-center relative overflow-hidden">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
@@ -111,73 +111,73 @@ export default function ConfirmationView({ order, onBack }) {
                 <div className="p-6">
                     {/* Event Details */}
                     <div className="grid grid-cols-2 gap-3 mb-6">
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div className="text-xs text-slate-500 font-bold mb-1 flex items-center gap-1"><CalendarDays size={14} /> Fecha</div>
-                            <div className="text-sm font-semibold text-slate-800">{order.date}</div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-bold mb-1 flex items-center gap-1"><CalendarDays size={14} /> Fecha</div>
+                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{order.date}</div>
                         </div>
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div className="text-xs text-slate-500 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> Hora</div>
-                            <div className="text-sm font-semibold text-slate-800">{displayTime}</div>
+                        <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-bold mb-1 flex items-center gap-1"><Clock size={14} /> Hora</div>
+                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{displayTime}</div>
                         </div>
-                        <div className="col-span-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div className="text-xs text-slate-500 font-bold mb-1 flex items-center gap-1"><MapPin size={14} /> Ubicación</div>
-                            <div className="text-sm font-semibold text-slate-800">{order.eventLocation}</div>
+                        <div className="col-span-2 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 font-bold mb-1 flex items-center gap-1"><MapPin size={14} /> Ubicación</div>
+                            <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{order.eventLocation}</div>
                         </div>
                     </div>
 
                     {/* Order Summary */}
                     <div className="mb-6">
-                        <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-2">
                             <Receipt size={16} className="text-rose-500" /> Resumen del Pedido
                         </h3>
                         <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                             {(order.items || []).map((item, idx) => (
                                 <div key={idx} className="flex justify-between items-start text-sm">
                                     <div className="flex-1 pr-4">
-                                        <span className="font-semibold text-slate-700">{item.quantity}x {item.name || item.product?.name}</span>
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300">{item.quantity}x {item.name || item.product?.name}</span>
                                         {(!item.isRental && !item.category?.includes('Renta') && item.productType !== 'RENTAL' && !/tablón|tablon|mesa|silla|brincolín/i.test(item.name || item.product?.name || '')) && (
-                                            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-300 mt-0.5">⏱️ Servicio de {item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos'}</p>
+                                            <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400 mt-0.5">⏱️ Servicio de {item.quantity >= 50 ? '2 horas' : '1 hora y 30 minutos'}</p>
                                         )}
                                         {item.customization && (
-                                            <div className="text-[11px] text-slate-500 mt-0.5 leading-tight space-y-0.5">
+                                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight space-y-0.5">
                                                 {item.customization.size && (
-                                                    <p><strong className="text-slate-600">Tamaño:</strong> {item.customization.size === 'quarter' ? 'Bowl 1/4' : item.customization.size === 'half' ? 'Bowl 1/2' : item.customization.size}</p>
+                                                    <p><strong className="text-slate-600 dark:text-slate-300">Tamaño:</strong> {item.customization.size === 'quarter' ? 'Bowl 1/4' : item.customization.size === 'half' ? 'Bowl 1/2' : item.customization.size}</p>
                                                 )}
                                                 {item.customization.bases && item.customization.bases.length > 0 && (
-                                                    <p><strong className="text-slate-600">Base:</strong> {item.customization.bases.join(', ')}</p>
+                                                    <p><strong className="text-slate-600 dark:text-slate-300">Base:</strong> {item.customization.bases.join(', ')}</p>
                                                 )}
                                                 {item.customization.complements && item.customization.complements.length > 0 && (
-                                                    <p><strong className="text-slate-600">Comp:</strong> {item.customization.complements.join(', ')}</p>
+                                                    <p><strong className="text-slate-600 dark:text-slate-300">Comp:</strong> {item.customization.complements.join(', ')}</p>
                                                 )}
                                                 {item.customization.toppings && item.customization.toppings.length > 0 && (
-                                                    <p><strong className="text-slate-600">Top:</strong> {item.customization.toppings.join(', ')}</p>
+                                                    <p><strong className="text-slate-600 dark:text-slate-300">Top:</strong> {item.customization.toppings.join(', ')}</p>
                                                 )}
                                             </div>
                                         )}
                                     </div>
-                                    <span className="font-medium text-slate-600">${item.totalPrice?.toLocaleString('es-MX')}</span>
+                                    <span className="font-medium text-slate-600 dark:text-slate-300">${item.totalPrice?.toLocaleString('es-MX')}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {/* Totals */}
-                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2 mb-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 space-y-2 mb-6">
                         {discountApplies && snackSubtotal > 0 ? (
                             <>
-                                <div className="flex justify-between items-center text-sm font-semibold text-slate-500 line-through decoration-slate-400/50 mb-2">
+                                <div className="flex justify-between items-center text-sm font-semibold text-slate-500 dark:text-slate-400 line-through decoration-slate-400/50 mb-2">
                                     <span>Total regular</span>
                                     <span>${subtotal.toLocaleString('es-MX')} MXN</span>
                                 </div>
-                                <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                                    <span className="text-xs font-bold text-rose-600">✨ Si apartas tu fecha HOY:</span>
-                                    <span className="text-lg font-black text-rose-600">
+                                <div className="bg-rose-50 dark:bg-rose-900/40 border border-rose-100 dark:border-rose-800/50 rounded-xl p-3 flex justify-between items-center shadow-sm">
+                                    <span className="text-xs font-bold text-rose-600 dark:text-rose-400">✨ Si apartas tu fecha HOY:</span>
+                                    <span className="text-lg font-black text-rose-600 dark:text-rose-400">
                                         ${total.toLocaleString('es-MX')} MXN
                                     </span>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex justify-between text-lg font-black text-slate-800">
+                            <div className="flex justify-between text-lg font-black text-slate-800 dark:text-slate-200">
                                 <span>Total Estimado</span>
                                 <span>${total.toLocaleString('es-MX')} MXN</span>
                             </div>
