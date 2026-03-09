@@ -65,35 +65,35 @@ export default function SocialGallery() {
 
     return (
         <>
-            <div className="glass-panel py-6 md:py-8 rounded-2xl md:rounded-3xl overflow-hidden relative group">
-                <div className="px-4 md:px-6 flex justify-between items-end mb-4 md:mb-6">
+            <div className="glass-panel py-6 md:py-12 rounded-2xl md:rounded-none md:w-[100vw] md:relative md:left-1/2 md:-translate-x-1/2 md:border-x-0 overflow-hidden relative group">
+                <div className="max-w-6xl mx-auto px-4 md:px-4 flex justify-between items-end mb-4 md:mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-0.5 md:mb-1">
                             <div className="bg-rose-100 dark:bg-rose-900/30 p-1.5 md:p-2 rounded-full">
                                 <ImageIcon size={16} className="text-rose-600 md:w-5 md:h-5" />
                             </div>
-                            <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white">Galería 📸</h3>
+                            <h3 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white">Galería 📸</h3>
                         </div>
-                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">Momentos Media Luna. Síguenos en FB.</p>
+                        <p className="text-xs md:text-sm lg:text-base text-slate-500 dark:text-slate-400">Momentos Media Luna. Síguenos en FB.</p>
                     </div>
                     <a
                         href={FACEBOOK_PAGE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1877F2] text-white text-xs md:text-sm font-bold rounded-lg md:rounded-xl shadow-lg hover:bg-[#166fe5] transition-colors flex items-center gap-1.5 md:gap-2 shrink-0"
+                        className="px-3 py-1.5 md:px-5 md:py-2.5 bg-[#1877F2] text-white text-xs md:text-sm font-bold rounded-lg md:rounded-xl shadow-lg hover:bg-[#166fe5] transition-colors flex items-center gap-1.5 md:gap-2 shrink-0"
                     >
-                        <Facebook size={16} className="md:w-[18px] md:h-[18px]" />
+                        <Facebook size={16} className="md:w-5 md:h-5" />
                         <span className="hidden xs:inline">Ver Facebook</span>
                     </a>
                 </div>
 
                 {/* Slider Container */}
-                <div className="relative w-full px-4 md:px-6">
+                <div className="relative w-full px-4 md:px-8 lg:px-12">
                     <button
                         onClick={scrollLeft}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-r-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 -translate-x-full md:group-hover:translate-x-0"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-4 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-r-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 -translate-x-full md:group-hover:translate-x-0"
                     >
-                        <ChevronLeft size={24} />
+                        <ChevronLeft size={24} className="md:w-8 md:h-8" />
                     </button>
 
                     <div
@@ -122,9 +122,9 @@ export default function SocialGallery() {
 
                     <button
                         onClick={scrollRight}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-l-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 translate-x-full md:group-hover:translate-x-0"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-4 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-l-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 translate-x-full md:group-hover:translate-x-0"
                     >
-                        <ChevronRight size={24} />
+                        <ChevronRight size={24} className="md:w-8 md:h-8" />
                     </button>
                 </div>
             </div>
