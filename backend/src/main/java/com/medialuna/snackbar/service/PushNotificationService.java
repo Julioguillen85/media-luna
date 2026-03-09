@@ -16,6 +16,9 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.scheduling.annotation.Async;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class PushNotificationService {
 
@@ -73,6 +76,11 @@ public class PushNotificationService {
                 order.getCustomer(), formattedTotal, order.getId());
 
         List<PushSubscription> owners = subscriptionRepository.findByRole("owner");
+        log.info("📢 Enviando push notification de pedido #{} a {} suscriptores", order.getId(), owners.size());
+        if (owners.isEmpty()) {
+            log.warn(
+                    "⚠️ No hay suscriptores push registrados con role 'owner'. Visita /admin y activa las notificaciones.");
+        }
         for (PushSubscription sub : owners) {
             sendNotification(sub, payload);
         }
@@ -97,10 +105,13 @@ public class PushNotificationService {
                     .build();
 
             pushService.send(notification);
+            log.info("✅ Push notification enviada a endpoint: {}...",
+                    sub.getEndpoint().substring(0, Math.min(60, sub.getEndpoint().length())));
         } catch (Exception e) {
-            System.err.println("Failed to send push notification to endpoint: " + sub.getEndpoint() + ". Error: "
-                    + e.getMessage());
+            log.error("❌ Error enviando push a endpoint: {}... Error: {}",
+                    sub.getEndpoint().substring(0, Math.min(60, sub.getEndpoint().length())), e.getMessage());
             if (e.getMessage() != null && e.getMessage().contains("410")) {
+                log.info("🗑️ Eliminando suscripción expirada (410 Gone)");
                 removeSubscription(sub.getEndpoint());
             }
         }
