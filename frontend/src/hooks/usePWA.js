@@ -35,7 +35,18 @@ export function usePWA() {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             navigator.serviceWorker.register('/sw.js').then(registration => {
                 registration.pushManager.getSubscription().then(subscription => {
-                    setIsSubscribed(subscription !== null);
+                    const hasSub = subscription !== null;
+                    setIsSubscribed(hasSub);
+
+                    // Si ya tiene permiso y suscripción, re-enviarla al backend
+                    // por si el backend se reinició (Railway) y borró sus datos
+                    if (hasSub && Notification.permission === 'granted') {
+                        fetch(`${API_URL}/push/subscribe`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(subscription)
+                        }).catch(err => console.error("Error auto-resubscribing:", err));
+                    }
                 });
             }).catch(err => console.error("SW Registration failed", err));
         }
