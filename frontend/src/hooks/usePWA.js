@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 
-const VAPID_PUBLIC_KEY = 'BP12x0L6TPDSz3uiqlagjJd-pqHZU0AQiDEjYnNLvRf2-eKj6xPDFqDXMRTUMlShm3-4LrLcZCk1z7Wse4coJiY';
 const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
 
 function urlBase64ToUint8Array(base64String) {
@@ -82,9 +81,13 @@ export function usePWA() {
 
             const registration = await navigator.serviceWorker.ready;
 
+            const res = await fetch(`${API_URL}/push/public-key`);
+            const data = await res.json();
+            const publicKey = data.publicKey;
+
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
 
             const response = await fetch(`${API_URL}/push/subscribe`, {
