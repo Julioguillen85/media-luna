@@ -9,31 +9,30 @@ self.addEventListener('install', event => {
 self.addEventListener('push', event => {
     if (!event.data) return;
 
+    let title = '¡Nuevo Pedido!';
+    let options = {
+        body: 'Tienes un nuevo pedido en Media Luna',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        vibrate: [200, 100, 200, 100, 200],
+        data: { url: '/admin' },
+        requireInteraction: true
+    };
+
     try {
         const data = event.data.json();
-        const options = {
-            body: data.body,
-            icon: data.icon || '/icons/icon-192.png',
-            badge: '/icons/icon-192.png',
-            vibrate: [200, 100, 200, 100, 200],
-            data: { url: data.url || '/' },
-            requireInteraction: true // Mantiene la notificación visible hasta que el usuario interactúe
-        };
-
-        event.waitUntil(
-            self.registration.showNotification(data.title, options)
-        );
+        title = data.title || title;
+        options.body = data.body || options.body;
+        options.icon = data.icon || options.icon;
+        if (data.url) options.data.url = data.url;
     } catch (e) {
-        console.error('Error parsing push data:', e);
-        // Fallback en caso de que el JSON falle, para asegurar que la notificación llegue
-        event.waitUntil(
-            self.registration.showNotification('¡Nuevo Pedido!', {
-                body: 'Tienes un nuevo pedido en Media Luna',
-                icon: '/icons/icon-192.png',
-                data: { url: '/admin' }
-            })
-        );
+        console.error('Error parsing push JSON payload:', e);
     }
+
+    // Must return the promise directly to waitUntil so the OS knows when it's done
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
 });
 
 self.addEventListener('notificationclick', event => {
