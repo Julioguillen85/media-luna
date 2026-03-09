@@ -7,18 +7,31 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('push', event => {
-    if (event.data) {
+    if (!event.data) return;
+
+    try {
         const data = event.data.json();
         const options = {
             body: data.body,
             icon: data.icon || '/icons/icon-192.png',
             badge: '/icons/icon-192.png',
             vibrate: [200, 100, 200, 100, 200],
-            data: { url: data.url || '/' }
+            data: { url: data.url || '/' },
+            requireInteraction: true // Mantiene la notificación visible hasta que el usuario interactúe
         };
 
         event.waitUntil(
             self.registration.showNotification(data.title, options)
+        );
+    } catch (e) {
+        console.error('Error parsing push data:', e);
+        // Fallback en caso de que el JSON falle, para asegurar que la notificación llegue
+        event.waitUntil(
+            self.registration.showNotification('¡Nuevo Pedido!', {
+                body: 'Tienes un nuevo pedido en Media Luna',
+                icon: '/icons/icon-192.png',
+                data: { url: '/admin' }
+            })
         );
     }
 });
