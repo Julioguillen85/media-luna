@@ -46,8 +46,10 @@ public class PushNotificationService {
             pushService.setPublicKey(publicKey);
             pushService.setPrivateKey(privateKey);
             pushService.setSubject(subject);
+            log.info("✅ PushService inicializado correctamente con VAPID keys");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("❌ ERROR inicializando PushService con VAPID keys: {}", e.getMessage(), e);
+            pushService = null;
         }
     }
 
@@ -68,21 +70,29 @@ public class PushNotificationService {
 
     @Async
     public void sendOrderNotification(com.medialuna.snackbar.model.CustomerOrder order) {
-        NumberFormat mxnFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
-        double total = order.getTotal() != null ? order.getTotal() : 0.0;
-        String formattedTotal = mxnFormat.format(total);
-        String payload = String.format(
-                "{\"title\":\"¡Nuevo Pedido!\",\"body\":\"%s pidió por %s (ID: %s)\",\"icon\":\"/icons/icon-192.png\",\"url\":\"/admin\"}",
-                order.getCustomer(), formattedTotal, order.getId());
+        try {
+            if (pushService == null) {
+                log.error("❌ PushService es null — VAPID keys no se inicializaron correctamente");
+                return;
+            }
+            NumberFormat mxnFormat = NumberFormat.getCurrencyInstance(new Locale("es", "MX"));
+            double total = order.getTotal() != null ? order.getTotal() : 0.0;
+            String formattedTotal = mxnFormat.format(total);
+            String payload = String.format(
+                    "{\"title\":\"¡Nuevo Pedido!\",\"body\":\"%s pidió por %s (ID: %s)\",\"icon\":\"/icons/icon-192.png\",\"url\":\"/admin\"}",
+                    order.getCustomer(), formattedTotal, order.getId());
 
-        List<PushSubscription> owners = subscriptionRepository.findByRole("owner");
-        log.info("📢 Enviando push notification de pedido #{} a {} suscriptores", order.getId(), owners.size());
-        if (owners.isEmpty()) {
-            log.warn(
-                    "⚠️ No hay suscriptores push registrados con role 'owner'. Visita /admin y activa las notificaciones.");
-        }
-        for (PushSubscription sub : owners) {
-            sendNotification(sub, payload);
+            List<PushSubscription> owners = subscriptionRepository.findByRole("owner");
+            log.info("📢 Enviando push notification de pedido #{} a {} suscriptores", order.getId(), owners.size());
+            if (owners.isEmpty()) {
+                log.warn(
+                        "⚠️ No hay suscriptores push registrados con role 'owner'. Visita /admin y activa las notificaciones.");
+            }
+            for (PushSubscription sub : owners) {
+                sendNotification(sub, payload);
+            }
+        } catch (Exception e) {
+            log.error("❌ Error en sendOrderNotification: {}", e.getMessage(), e);
         }
     }
 
