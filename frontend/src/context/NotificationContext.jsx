@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { notificationService } from '../services/notificationService';
 import { useAuth } from './AuthContext';
+import { usePWA } from '../hooks/usePWA';
 
 const NotificationContext = createContext();
 
 export function NotificationProvider({ children }) {
     const { user } = useAuth();
+    const { subscribeToPush } = usePWA();
     const isSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
     const [permission, setPermission] = useState(isSupported ? Notification.permission : 'denied');
 
@@ -13,7 +14,7 @@ export function NotificationProvider({ children }) {
         if (user && permission === 'default') {
             requestPermission();
         }
-    }, [user]); // Request when user logs in
+    }, [user, permission]); // Request when user logs in
 
     const requestPermission = async () => {
         if (!isSupported) return;
@@ -21,7 +22,7 @@ export function NotificationProvider({ children }) {
             const result = await Notification.requestPermission();
             setPermission(result);
             if (result === 'granted') {
-                await notificationService.subscribeToPush();
+                await subscribeToPush();
             }
         } catch (error) {
             console.warn("Notifications not fully supported/allowed on this browser", error);
