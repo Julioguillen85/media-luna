@@ -112,6 +112,8 @@ public class PushNotificationService {
                     .userPublicKey(sub.getP256dh())
                     .userAuth(sub.getAuth())
                     .payload(payload.getBytes("UTF-8"))
+                    .ttl(86400) // 24 hours TTL required by some push services
+                    .urgency(nl.martijndwars.webpush.Urgency.HIGH) // Required by iOS/APNs for background delivery
                     .build();
 
             pushService.send(notification);
