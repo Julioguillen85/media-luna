@@ -502,7 +502,7 @@ export default function App() {
         <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} />
       )}
 
-      <main className={`flex-grow ${view === 'admin' ? 'w-full !p-0 !m-0 max-w-none' : 'max-w-6xl mx-auto px-4 py-8 relative'} z-10 w-full`}>
+      <main className={`flex-grow ${view === 'admin' ? 'w-full !p-0 !m-0 max-w-none' : 'max-w-[1400px] mx-auto px-4 py-8 relative'} z-10 w-full`}>
         {loading && <div className="fixed inset-0 bg-white/80 z-[60] flex items-center justify-center backdrop-blur-sm"><Loader2 className="animate-spin text-rose-500 mb-2" size={48} /></div>}
 
         {view === 'home' && (

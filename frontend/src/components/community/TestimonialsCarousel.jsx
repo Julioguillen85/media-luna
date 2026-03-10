@@ -17,7 +17,7 @@ export default function TestimonialsCarousel() {
                 <MessageCircle size={64} className="text-rose-500 md:w-[100px] md:h-[100px]" />
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 md:px-4 flex items-center gap-2 mb-4 md:mb-8">
+            <div className="max-w-[1400px] mx-auto px-4 md:px-4 flex items-center gap-2 mb-4 md:mb-8">
                 <div className="bg-rose-100 p-1.5 md:p-2 rounded-full"><Star size={16} className="text-rose-500 fill-rose-500 md:w-5 md:h-5" /></div>
                 <h3 className="text-lg md:text-xl lg:text-3xl font-extrabold text-slate-900 dark:text-white">Lo que dicen nuestros clientes</h3>
             </div>

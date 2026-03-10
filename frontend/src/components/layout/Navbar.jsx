@@ -55,7 +55,7 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
 
     return (
         <nav className={`sticky top-0 z-50 w-full border-b border-slate-200/50 dark:border-slate-700/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-sm transition-colors duration-500 ${view === 'admin' ? 'md:hidden' : ''}`}>
-            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
                 <div className="py-3 flex justify-between items-center transition-colors duration-500">
                     <div className="flex items-center gap-3">
                         {/* Hamburger menu ONLY in admin view on mobile */}

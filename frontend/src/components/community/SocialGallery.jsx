@@ -365,7 +365,7 @@ export default function SocialGallery({ fullScreen = false, onBack, onViewFullSc
     return (
         <>
             <div className="glass-panel py-6 md:py-12 rounded-2xl md:rounded-none md:w-[100vw] md:relative md:left-1/2 md:-translate-x-1/2 md:border-x-0 overflow-hidden relative group">
-                <div className="max-w-6xl mx-auto px-4 md:px-4 flex justify-between items-end mb-4 md:mb-8">
+                <div className="max-w-[1400px] mx-auto px-4 md:px-4 flex justify-between items-end mb-4 md:mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-0.5 md:mb-1">
                             <div className="bg-rose-100 dark:bg-rose-900/30 p-1.5 md:p-2 rounded-full">
