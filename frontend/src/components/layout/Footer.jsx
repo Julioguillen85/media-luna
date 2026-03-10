@@ -38,6 +38,12 @@ export default function Footer() {
                 </button>
             </div>
 
+            <div className="mt-6 pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                    Desarrollado por <span className="font-semibold text-slate-500 dark:text-slate-400">Martec</span> • media-luna v1.1
+                </p>
+            </div>
+
             <PolicyModal isOpen={isPolicyOpen} onClose={() => setIsPolicyOpen(false)} />
         </footer>
     );
