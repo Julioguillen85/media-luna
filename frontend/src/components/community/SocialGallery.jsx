@@ -386,25 +386,15 @@ export default function SocialGallery({ fullScreen = false, onBack, onViewFullSc
                     </a>
                 </div>
 
-                {/* Slider Container */}
-                <div className="relative w-full px-4 md:px-8 lg:px-12">
-                    <button
-                        onClick={scrollLeft}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-4 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-r-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 -translate-x-full md:group-hover:translate-x-0"
-                    >
-                        <ChevronLeft size={24} className="md:w-8 md:h-8" />
-                    </button>
-
-                    <div
-                        ref={scrollContainerRef}
-                        className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {images.map((img, i) => (
+                {/* Marquee Carousel Container */}
+                <div className="relative w-full overflow-hidden mask-linear-fade px-4 md:px-0">
+                    <div className="flex gap-3 md:gap-4 animate-marquee w-max py-2 hover:[animation-play-state:paused]">
+                        {/* Repeat images array to create infinite scroll effect */}
+                        {[...images, ...images].map((img, i) => (
                             <div
-                                key={img.id}
-                                onClick={() => openLightbox(i)}
-                                className="snap-start shrink-0 w-[60vw] md:w-[280px] lg:w-[320px] aspect-square rounded-xl md:rounded-2xl overflow-hidden border-2 border-transparent hover:border-rose-500 shadow-sm transition-all duration-300 relative cursor-pointer group/item"
+                                key={`${img.id}-${i}`}
+                                onClick={() => openLightbox(i % images.length)}
+                                className="w-[60vw] md:w-[280px] lg:w-[320px] aspect-square rounded-xl md:rounded-2xl overflow-hidden border-2 border-transparent hover:border-rose-500 shadow-sm transition-all duration-300 relative cursor-pointer group/item flex-shrink-0"
                             >
                                 <img
                                     src={img.url}
@@ -418,13 +408,6 @@ export default function SocialGallery({ fullScreen = false, onBack, onViewFullSc
                             </div>
                         ))}
                     </div>
-
-                    <button
-                        onClick={scrollRight}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-4 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-l-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 translate-x-full md:group-hover:translate-x-0"
-                    >
-                        <ChevronRight size={24} className="md:w-8 md:h-8" />
-                    </button>
                 </div>
 
                 {/* View full gallery button */}
