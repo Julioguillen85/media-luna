@@ -30,6 +30,5 @@ logs/
 .agent/rules/snyk_rules.md
 railway.json.bak
 railway.json
-backend/src/main/resources/application-prod.properties
 backend/TestFal.java
 backend/query_db.py
