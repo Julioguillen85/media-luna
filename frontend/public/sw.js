@@ -1,26 +1,38 @@
+const CACHE_VERSION = 'v1.0.1'; // Force PWA cache bust
+
 self.addEventListener('install', event => {
     self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
+}); self.addEventListener('activate', event => {
     event.waitUntil(clients.claim());
 });
 
 self.addEventListener('push', event => {
-    if (event.data) {
-        const data = event.data.json();
-        const options = {
-            body: data.body,
-            icon: data.icon || '/icons/icon-192.png',
-            badge: '/icons/icon-192.png',
-            vibrate: [200, 100, 200, 100, 200],
-            data: { url: data.url || '/' }
-        };
+    if (!event.data) return;
 
-        event.waitUntil(
-            self.registration.showNotification(data.title, options)
-        );
+    let title = '¡Nuevo Pedido!';
+    let options = {
+        body: 'Tienes un nuevo pedido en Media Luna',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        vibrate: [200, 100, 200, 100, 200],
+        data: { url: '/admin' },
+        requireInteraction: true
+    };
+
+    try {
+        const data = event.data.json();
+        title = data.title || title;
+        options.body = data.body || options.body;
+        options.icon = data.icon || options.icon;
+        if (data.url) options.data.url = data.url;
+    } catch (e) {
+        console.error('Error parsing push JSON payload:', e);
     }
+
+    // Must return the promise directly to waitUntil so the OS knows when it's done
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
 });
 
 self.addEventListener('notificationclick', event => {

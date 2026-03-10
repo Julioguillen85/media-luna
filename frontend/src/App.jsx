@@ -24,7 +24,7 @@ import DiscountTimer from './components/layout/DiscountTimer';
 import PWAInstallBanner from './components/layout/PWAInstallBanner';
 
 const DEMO_MODE = false;
-const API_URL = "/api";
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
 const BUSINESS_PHONE = "523123099318";
 
 const BACKUP_OPTIONS = {

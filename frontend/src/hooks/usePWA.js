@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const VAPID_PUBLIC_KEY = 'BP12x0L6TPDSz3uiqlagjJd-pqHZU0AQiDEjYnNLvRf2-eKj6xPDFqDXMRTUMlShm3-4LrLcZCk1z7Wse4coJiY';
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
 
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -34,7 +34,18 @@ export function usePWA() {
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             navigator.serviceWorker.register('/sw.js').then(registration => {
                 registration.pushManager.getSubscription().then(subscription => {
-                    setIsSubscribed(subscription !== null);
+                    const hasSub = subscription !== null;
+                    setIsSubscribed(hasSub);
+
+                    // Si ya tiene permiso y suscripción, re-enviarla al backend
+                    // por si el backend se reinició (Railway) y borró sus datos
+                    if (hasSub && Notification.permission === 'granted') {
+                        fetch(`${API_URL}/push/subscribe`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(subscription)
+                        }).catch(err => console.error("Error auto-resubscribing:", err));
+                    }
                 });
             }).catch(err => console.error("SW Registration failed", err));
         }
@@ -70,12 +81,16 @@ export function usePWA() {
 
             const registration = await navigator.serviceWorker.ready;
 
+            const res = await fetch(`${API_URL}/push/public-key`);
+            const data = await res.json();
+            const publicKey = data.publicKey;
+
             const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
 
-            const response = await fetch('/api/push/subscribe', {
+            const response = await fetch(`${API_URL}/push/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(subscription)

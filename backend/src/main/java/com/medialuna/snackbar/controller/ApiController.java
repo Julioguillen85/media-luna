@@ -35,6 +35,8 @@ public class ApiController {
     private WhatsAppService whatsAppService;
     @Autowired
     private com.medialuna.snackbar.service.MercadoPagoService mercadoPagoService;
+    @Autowired
+    private FileUploadController fileUploadController;
 
     @GetMapping("/products")
     public List<Product> getProducts() {
@@ -70,6 +72,8 @@ public class ApiController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> deleteGalleryImage(@PathVariable("id") Long id) {
         return galleryImageRepository.findById(id).map(img -> {
+            // Delete from Cloudinary if it's a cloud URL
+            fileUploadController.deleteCloudinaryImage(img.getUrl());
             galleryImageRepository.deleteById(id);
             return ResponseEntity.ok().body(Map.of("message", "Imagen eliminada"));
         }).orElse(ResponseEntity.notFound().build());
@@ -118,6 +122,9 @@ public class ApiController {
         // Si el producto existe, eliminarlo
         return productOptional.map(product -> {
             try {
+                // Delete image from Cloudinary if applicable
+                fileUploadController.deleteCloudinaryImage(product.getImg());
+
                 // Desvincular de órdenes
                 orderItemRepository.detachProduct(id);
                 log.info("Productos desvinculados de órdenes.");
