@@ -14,6 +14,7 @@ import IngredientSelector from './IngredientSelector';
 import MenuCheckboxPanel from './MenuCheckboxPanel';
 
 const BUSINESS_PHONE = '523123099318';
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : "/api";
 
 import { isCustomizable, isTray } from '../../App';
 
@@ -61,7 +62,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
     // ============================================
     const callGeminiBackend = async (userMessage) => {
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch(`${API_URL}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -700,7 +701,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
             const finalTotal = rawSubtotal - discountAmount;
 
-            const response = await fetch('/api/orders', {
+            const response = await fetch(`${API_URL}/orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

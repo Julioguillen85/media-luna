@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 
 @Slf4j
 @Service
@@ -22,6 +23,7 @@ public class WhatsAppService {
     @Value("${whatsapp.business.number:0000000000}")
     private String businessNumber;
 
+    @Async
     public void sendOrderNotification(CustomerOrder order) {
         if (apiToken == null || apiToken.contains("PON_AQUI") || apiToken.equals("DISABLED")) {
             log.warn("⚠️ WhatsApp API no configurada.");
@@ -80,6 +82,7 @@ public class WhatsAppService {
     /**
      * Send a weekly sales report via WhatsApp to the business owner
      */
+    @Async
     public void sendWeeklyReport(String reportText, String phoneNumber) {
         if (apiToken == null || apiToken.contains("PON_AQUI") || apiToken.equals("DISABLED")) {
             log.warn("⚠️ WhatsApp API no configurada — reporte no enviado.");

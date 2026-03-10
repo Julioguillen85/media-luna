@@ -1,17 +1,14 @@
 package com.medialuna.snackbar.controller;
 
+import com.medialuna.snackbar.dto.SubscriptionRequest;
 import com.medialuna.snackbar.model.PushSubscription;
-import com.medialuna.snackbar.repository.PushSubscriptionRepository;
-import nl.martijndwars.webpush.Notification;
-import nl.martijndwars.webpush.PushService;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import com.medialuna.snackbar.service.PushNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.annotation.PostConstruct;
-import java.security.Security;
 import java.util.Map;
 
 @Slf4j
@@ -20,21 +17,10 @@ import java.util.Map;
 public class NotificationController {
 
     @Autowired
-    private PushSubscriptionRepository subscriptionRepository;
+    private PushNotificationService pushNotificationService;
 
     @Value("${vapid.public.key}")
     private String publicKey;
-
-    @Value("${vapid.private.key}")
-    private String privateKey;
-
-    private PushService pushService;
-
-    @PostConstruct
-    public void init() throws Exception {
-        Security.addProvider(new BouncyCastleProvider());
-        pushService = new PushService(publicKey, privateKey, "mailto:admin@medialuna.com");
-    }
 
     @GetMapping("/vapid-public-key")
     public Map<String, String> getVapidPublicKey() {
@@ -42,20 +28,30 @@ public class NotificationController {
     }
 
     @PostMapping("/subscribe")
-    public void subscribe(@RequestBody PushSubscription subscription) {
-        subscriptionRepository.save(subscription);
-        System.out.println("New push subscription saved!");
+    public ResponseEntity<?> subscribe(@RequestBody SubscriptionRequest request) {
+        log.info("📥 Nueva suscripción push recibida en /api/notifications/subscribe");
+
+        if (request.getKeys() == null || request.getKeys().getP256dh() == null || request.getKeys().getAuth() == null) {
+            log.error("❌ Suscripción push inválida: keys faltantes");
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid subscription data"));
+        }
+
+        PushSubscription sub = new PushSubscription();
+        sub.setEndpoint(request.getEndpoint());
+        sub.setP256dh(request.getKeys().getP256dh());
+        sub.setAuth(request.getKeys().getAuth());
+        sub.setRole("owner");
+
+        pushNotificationService.subscribe(sub);
+        log.info("✅ Suscripción push guardada correctamente para endpoint: {}...",
+                request.getEndpoint().substring(0, Math.min(60, request.getEndpoint().length())));
+
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @PostMapping("/test")
-    public void sendTestNotification(@RequestBody PushSubscription subscription) throws Exception {
-        log.info("Sending test push notification to endpoint: {}", subscription.getEndpoint());
-        Notification notification = new Notification(
-                subscription.getEndpoint(),
-                subscription.getP256dh(),
-                subscription.getAuth(),
-                "{\"title\": \"Test Notification\", \"body\": \"This is a test notification from Snackbar!\"}"
-                        .getBytes());
-        pushService.send(notification);
+    public ResponseEntity<?> sendTestNotification() {
+        pushNotificationService.sendTestNotification();
+        return ResponseEntity.ok(Map.of("success", true, "message", "Test notification sent"));
     }
 }

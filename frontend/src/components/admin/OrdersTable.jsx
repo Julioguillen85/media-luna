@@ -166,8 +166,8 @@ export default function OrdersTable({ orders, onUpdateOrderStatus, onDeleteOrder
                                         {order.items?.map((item, idx) => (
                                             <div key={idx} className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 transition-colors duration-300">
                                                 <div className="font-medium text-slate-900 dark:text-white text-sm mb-1 transition-colors duration-300">
-                                                    {item.name}
-                                                    {item.quantity > 0 && <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">(Para {item.quantity} personas)</span>}
+                                                    {item.quantity}x {item.name}
+                                                    {item.quantity > 0 && item.category === 'Snacks' && false && <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">(Para {item.quantity} personas)</span>}
                                                 </div>
                                                 {item.customization && (() => {
                                                     const isPapas = item.name?.toLowerCase().includes('papas preparadas');
