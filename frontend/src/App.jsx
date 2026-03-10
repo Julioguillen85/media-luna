@@ -499,7 +499,7 @@ export default function App() {
       <Navbar setView={setView} cart={cart} isAdmin={isAdmin} setIsAdmin={setIsAdmin} setShowLogin={setShowLogin} view={view} setIsCartModalOpen={setIsCartModalOpen} onLogout={handleLogout} isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
 
       {view === 'home' && (
-        <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} />
+        <HeroSection openBot={() => setIsBotOpen(true)} setActiveCategory={setActiveCategory} options={options} />
       )}
 
       <main className={`flex-grow ${view === 'admin' ? 'w-full !p-0 !m-0 max-w-none' : 'max-w-[1400px] mx-auto px-4 py-8 relative'} z-10 w-full`}>

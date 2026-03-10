@@ -56,7 +56,7 @@ export default function AdminDashboard({ products, categories, orders, options, 
     const allTabs = [
         { id: 'products', label: 'Productos', icon: Utensils },
         { id: 'orders', label: 'Pedidos', icon: Package },
-        { id: 'options', label: 'Opciones', icon: Settings },
+        { id: 'options', label: 'Personalización Snacks', icon: Settings },
         { id: 'inventory', label: 'Inventario', icon: Warehouse },
         { id: 'analytics', label: 'Analíticas', icon: TrendingUp },
         { id: 'marketing', label: 'Marketing', icon: Sparkles },
@@ -350,7 +350,13 @@ export default function AdminDashboard({ products, categories, orders, options, 
                                                                     </div>
                                                                 </td>
                                                                 <td className="px-6 py-4"><span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-bold transition-colors duration-300">{product.category}</span></td>
-                                                                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300 transition-colors duration-300">${product.price}</td>
+                                                                <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-300 transition-colors duration-300">
+                                                                    {product.productType === 'SNACK' ? (
+                                                                        <span className="text-xs text-rose-500 font-extrabold bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded-lg">Por volumen</span>
+                                                                    ) : (
+                                                                        `$${product.price}`
+                                                                    )}
+                                                                </td>
                                                                 <td className="px-6 py-4 text-right">
                                                                     <div className="flex items-center justify-end gap-2">
                                                                         <button
@@ -383,7 +389,11 @@ export default function AdminDashboard({ products, categories, orders, options, 
                                                             <div className="flex-1 min-w-0">
                                                                 <h3 className="font-bold text-slate-900 dark:text-white text-base truncate transition-colors duration-300">{product.name}</h3>
                                                                 <span className="inline-block px-2 py-1 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs font-bold mt-1 transition-colors duration-300">{product.category}</span>
-                                                                <p className="font-bold text-rose-600 dark:text-rose-400 text-lg mt-1 transition-colors duration-300">${product.price}</p>
+                                                                {product.productType === 'SNACK' ? (
+                                                                    <p className="font-extrabold text-rose-500 text-sm mt-1 bg-rose-50 dark:bg-rose-900/30 inline-block px-2 py-0.5 rounded-lg transition-colors duration-300">Por volumen</p>
+                                                                ) : (
+                                                                    <p className="font-bold text-rose-600 dark:text-rose-400 text-lg mt-1 transition-colors duration-300">${product.price}</p>
+                                                                )}
                                                             </div>
                                                         </div>
                                                         <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
@@ -495,7 +505,7 @@ export default function AdminDashboard({ products, categories, orders, options, 
                                 {/* Gallery Tab */}
                                 {
                                     activeTab === 'gallery' && (
-                                        <GalleryTab />
+                                        <GalleryTab options={options} onSaveOptions={onSaveOptions} />
                                     )
                                 }
 
