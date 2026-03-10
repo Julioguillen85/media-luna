@@ -364,47 +364,37 @@ export default function SocialGallery({ fullScreen = false, onBack, onViewFullSc
     // ═══════════════════════════════════════════
     return (
         <>
-            <div className="glass-panel py-6 md:py-8 rounded-2xl md:rounded-3xl overflow-hidden relative group">
-                <div className="px-4 md:px-6 flex justify-between items-end mb-4 md:mb-6">
+            <div className="glass-panel py-6 md:py-8 overflow-hidden relative group w-[100vw] max-w-[100vw] ml-[calc(50%-50vw)] mr-[calc(50%-50vw)] rounded-none border-x-0">
+                <div className="max-w-[1400px] mx-auto px-4 md:px-6 flex justify-between items-end mb-4 md:mb-6">
                     <div>
-                        <div className="flex items-center gap-2 mb-0.5 md:mb-1">
-                            <div className="bg-rose-100 dark:bg-rose-900/30 p-1.5 md:p-2 rounded-full">
-                                <ImageIcon size={16} className="text-rose-600 md:w-5 md:h-5" />
+                        <div className="flex items-center gap-2 mb-0.5 mt-1 md:mb-1">
+                            <div className="bg-rose-100 dark:bg-rose-900/30 p-1 md:p-1.5 rounded-full">
+                                <ImageIcon size={14} className="text-rose-600 md:w-4 md:h-4" />
                             </div>
-                            <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-white">Galería 📸</h3>
+                            <h3 className="text-lg md:text-xl lg:text-2xl font-extrabold text-slate-900 dark:text-white">Galería 📸</h3>
                         </div>
-                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400">Momentos Media Luna. Síguenos en FB.</p>
+                        <p className="text-[11px] md:text-xs lg:text-sm text-slate-500 dark:text-slate-400">Momentos Media Luna. Síguenos en FB.</p>
                     </div>
                     <a
                         href={FACEBOOK_PAGE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 md:px-4 md:py-2 bg-[#1877F2] text-white text-xs md:text-sm font-bold rounded-lg md:rounded-xl shadow-lg hover:bg-[#166fe5] transition-colors flex items-center gap-1.5 md:gap-2 shrink-0"
+                        className="px-2.5 py-1.5 md:px-4 md:py-2 bg-[#1877F2] text-white text-[11px] md:text-xs lg:text-sm font-bold rounded-lg md:rounded-xl shadow-lg hover:bg-[#166fe5] transition-colors flex items-center gap-1.5 md:gap-2 shrink-0 mb-1"
                     >
-                        <Facebook size={16} className="md:w-[18px] md:h-[18px]" />
+                        <Facebook size={14} className="md:w-4 md:h-4" />
                         <span className="hidden xs:inline">Ver Facebook</span>
                     </a>
                 </div>
 
-                {/* Slider Container */}
-                <div className="relative w-full px-4 md:px-6">
-                    <button
-                        onClick={scrollLeft}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-r-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 -translate-x-full md:group-hover:translate-x-0"
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-
-                    <div
-                        ref={scrollContainerRef}
-                        className="flex gap-3 md:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    >
-                        {images.map((img, i) => (
+                {/* Marquee Carousel Container */}
+                <div className="relative w-full overflow-hidden mask-linear-fade px-2 md:px-4 lg:px-6">
+                    <div className="flex gap-3 md:gap-4 animate-marquee w-max py-2 hover:[animation-play-state:paused] items-center">
+                        {/* Repeat images array to create infinite scroll effect */}
+                        {[...images, ...images].map((img, i) => (
                             <div
-                                key={img.id}
-                                onClick={() => openLightbox(i)}
-                                className="snap-start shrink-0 w-[60vw] md:w-[280px] lg:w-[320px] aspect-square rounded-xl md:rounded-2xl overflow-hidden border-2 border-transparent hover:border-rose-500 shadow-sm transition-all duration-300 relative cursor-pointer group/item"
+                                key={`${img.id}-${i}`}
+                                onClick={() => openLightbox(i % images.length)}
+                                className="w-[75vw] sm:w-[50vw] md:w-[320px] lg:w-[400px] aspect-square rounded-xl md:rounded-2xl overflow-hidden border-2 border-transparent hover:border-rose-500 shadow-sm transition-all duration-300 relative cursor-pointer group/item flex-shrink-0"
                             >
                                 <img
                                     src={img.url}
@@ -418,13 +408,6 @@ export default function SocialGallery({ fullScreen = false, onBack, onViewFullSc
                             </div>
                         ))}
                     </div>
-
-                    <button
-                        onClick={scrollRight}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-white rounded-l-2xl shadow-xl hover:bg-white dark:hover:bg-slate-700 transition-all opacity-0 md:group-hover:opacity-100 translate-x-full md:group-hover:translate-x-0"
-                    >
-                        <ChevronRight size={24} />
-                    </button>
                 </div>
 
                 {/* View full gallery button */}

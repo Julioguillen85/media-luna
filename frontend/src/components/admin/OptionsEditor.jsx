@@ -13,7 +13,7 @@ export default function OptionsEditor({ options, onSaveOptions }) {
         if (!newItem.trim()) return;
         setEditingOptions({
             ...editingOptions,
-            [type]: [...editingOptions[type], newItem.trim()]
+            [type]: [...(editingOptions[type] || []), newItem.trim()]
         });
         setNewItem('');
         // Calculate newly added page if it overflows

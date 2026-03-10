@@ -202,7 +202,8 @@ public class ApiController {
         return optionsRepository.findById(1L).orElse(new IngredientOptions());
     }
 
-    @PostMapping("/options")
+    @RequestMapping(value = "/options", method = { org.springframework.web.bind.annotation.RequestMethod.POST,
+            org.springframework.web.bind.annotation.RequestMethod.PUT })
     public IngredientOptions updateOptions(@RequestBody IngredientOptions options) {
         options.setId(1L);
         return optionsRepository.save(options);

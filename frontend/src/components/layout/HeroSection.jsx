@@ -1,17 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Utensils, MapPin, CupSoda, CheckCircle, Bot, Instagram, Facebook, MessageCircle, Armchair, Tent } from 'lucide-react';
 
-export default function HeroSection({ openBot, setActiveCategory }) {
+export default function HeroSection({ openBot, setActiveCategory, options }) {
+    const [currentBannerIdx, setCurrentBannerIdx] = useState(0);
+
+    const desktopBanners = options?.desktopBanners?.length > 0 ? options.desktopBanners : ["/images/hero-bg.jpg"];
+    const mobileBanners = options?.mobileBanners?.length > 0 ? options.mobileBanners : ["/images/hero-bg-mobile.jpg"];
+
+    useEffect(() => {
+        console.log("HeroSection Desktop Banners:", desktopBanners);
+        console.log("HeroSection Mobile Banners:", mobileBanners);
+    }, [desktopBanners, mobileBanners]);
+
+    useEffect(() => {
+        const maxLen = Math.max(desktopBanners.length, mobileBanners.length);
+        if (maxLen <= 1) return;
+
+        const interval = setInterval(() => {
+            setCurrentBannerIdx((prev) => (prev + 1) % maxLen);
+        }, 5000); // Change banner every 5 seconds
+
+        return () => clearInterval(interval);
+    }, [desktopBanners.length, mobileBanners.length]);
+
     return (
         <div className="w-full relative overflow-hidden shadow-xl dark:shadow-2xl px-6 py-12 md:px-12 md:py-20 transition-colors duration-500 min-h-[75vh] md:min-h-[85vh] flex flex-col justify-center">
             {/* Background Image Layer - Desktop */}
-            <div className="hidden md:block absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/hero-bg.jpg')" }}></div>
+            {desktopBanners.map((bg, idx) => (
+                <img
+                    key={`desk-${idx}`}
+                    src={bg.replace(/["']/g, '')}
+                    alt={`Banner Desktop ${idx + 1}`}
+                    className={`hidden md:block absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % desktopBanners.length ? 'opacity-100' : 'opacity-0'}`}
+                />
+            ))}
 
             {/* Background Image Layer - Mobile */}
-            <div className="md:hidden absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/hero-bg-mobile.jpg')" }}></div>
+            {mobileBanners.map((bg, idx) => (
+                <img
+                    key={`mob-${idx}`}
+                    src={bg.replace(/["']/g, '')}
+                    alt={`Banner Mobile ${idx + 1}`}
+                    className={`md:hidden absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % mobileBanners.length ? 'opacity-100' : 'opacity-0'}`}
+                />
+            ))}
 
             {/* Soft Dark Overlay to ensure readability but keep image visible */}
-            <div className="absolute inset-0 bg-black/30 dark:bg-black/50 z-0"></div>
+            <div className="absolute inset-0 bg-black/30 dark:bg-black/50 z-0 transition-opacity duration-1000"></div>
 
             {/* HBO Max Cinematic Gradient (Desktop only) */}
             <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent dark:from-black/95 dark:via-black/60 pointer-events-none z-0"></div>

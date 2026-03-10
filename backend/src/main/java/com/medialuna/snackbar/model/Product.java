@@ -70,6 +70,13 @@ public class Product {
         }
     }
 
+    public void setPriceTiers(List<PriceTier> priceTiers) {
+        this.priceTiers = priceTiers;
+        if (priceTiers != null) {
+            priceTiers.forEach(pt -> pt.setProduct(this));
+        }
+    }
+
     public void setQuarterPriceTiers(List<PriceTier> quarterPriceTiers) {
         this.quarterPriceTiers = quarterPriceTiers;
         if (quarterPriceTiers != null) {

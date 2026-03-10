@@ -40,7 +40,7 @@ export default function Footer() {
 
             <div className="mt-6 pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                    Desarrollado por <span className="font-semibold text-slate-500 dark:text-slate-400">Martec</span> • media-luna v1.2
+                    Desarrollado por <span className="font-semibold text-slate-500 dark:text-slate-400">Martec</span> • media-luna v2.1
                 </p>
             </div>
 

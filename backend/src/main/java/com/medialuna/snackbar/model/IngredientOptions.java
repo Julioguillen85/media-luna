@@ -1,4 +1,5 @@
 package com.medialuna.snackbar.model;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.List;
@@ -15,4 +16,8 @@ public class IngredientOptions {
     private List<String> complements;
     @ElementCollection
     private List<String> toppings;
+    @ElementCollection
+    private List<String> desktopBanners;
+    @ElementCollection
+    private List<String> mobileBanners;
 }
