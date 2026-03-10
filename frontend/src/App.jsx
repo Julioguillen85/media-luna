@@ -539,7 +539,7 @@ export default function App() {
                     </div>
                   </div>
                   <div className="mt-8 animate-fade-in space-y-8">
-                    <SocialGallery />
+                    <SocialGallery onViewFullScreen={() => setView('gallery')} />
                     <CommunitySection />
                   </div>
                 </div>
@@ -548,7 +548,9 @@ export default function App() {
           </>
         )
         }
-
+        {view === 'gallery' && (
+          <SocialGallery fullScreen onBack={() => setView('home')} />
+        )}
         {view === 'confirmation' && lastOrder && <ConfirmationView order={lastOrder} onBack={() => setView('home')} />}
 
         {view === 'admin' && isAdmin && (
