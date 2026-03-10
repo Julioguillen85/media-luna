@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class MercadoPagoService {
 
-    @Value("${mercadopago.access.token:APP_USR-7868471373977543-030311-64155b1fcecf930d072fcc02f3c05151-2292631551}")
+    @Value("${mercadopago.access.token}")
     private String accessToken;
 
     private static final String MP_API_PREFERENCE = "https://api.mercadopago.com/checkout/preferences";
