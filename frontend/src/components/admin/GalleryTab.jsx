@@ -62,9 +62,14 @@ export default function GalleryTab({ options, onSaveOptions }) {
 
             if (!uploadRes.ok) throw new Error("Upload failed");
             const uploadData = await uploadRes.json();
-            const fileUrl = uploadData.url;
+            let fileUrl = uploadData.url;
 
-            const isVid = fileUrl.toLowerCase().endsWith('.mp4') || fileUrl.toLowerCase().endsWith('.webm') || fileUrl.toLowerCase().endsWith('.mov') || fileUrl.includes('/video/upload/');
+            // Cloudinary auto-transcodes .mov to .mp4 just by changing the extension
+            if (fileUrl.toLowerCase().endsWith('.mov')) {
+                fileUrl = fileUrl.replace(/\.mov$/i, '.mp4');
+            }
+
+            const isVid = fileUrl.toLowerCase().endsWith('.mp4') || fileUrl.toLowerCase().endsWith('.webm') || fileUrl.includes('/video/upload/');
 
             if (activeSection !== 'social' && isVid) {
                 setTrimVideoUrl(fileUrl);
@@ -214,7 +219,7 @@ export default function GalleryTab({ options, onSaveOptions }) {
                     type="file"
                     ref={activeSection === 'social' ? fileInputRef : fileInputRefBanners}
                     className="hidden"
-                    accept="image/*,video/mp4,video/webm,video/quicktime"
+                    accept="image/*,video/mp4,video/webm,video/quicktime,.mov,.mp4,.webm"
                     onChange={handleFileChange}
                 />
 
