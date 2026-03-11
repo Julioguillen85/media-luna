@@ -7,11 +7,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 @Configuration
 public class DataInitializer {
 
     @Bean
-    public CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public CommandLineRunner initData(UserRepository userRepository, PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate) {
         return args -> {
             var optAdmin = userRepository.findByUsername("admin");
             if (optAdmin.isEmpty()) {
@@ -26,6 +28,14 @@ public class DataInitializer {
                 admin.setPassword(passwordEncoder.encode("admin123"));
                 userRepository.save(admin);
                 System.out.println("Default admin user password reset to: admin / admin123");
+            }
+
+            // Automate PostgreSQL sequence repair to resolve duplicate key errors caused by older destructive updates
+            try {
+                jdbcTemplate.execute("SELECT setval('price_tiers_id_seq', (SELECT COALESCE(MAX(id), 1) FROM price_tiers))");
+                System.out.println("✅ PostgreSQL Sequence 'price_tiers_id_seq' synchronized successfully.");
+            } catch (Exception e) {
+                System.err.println("⚠️ Could not synchronize 'price_tiers_id_seq'. Ensure you are using PostgreSQL.");
             }
         };
     }
