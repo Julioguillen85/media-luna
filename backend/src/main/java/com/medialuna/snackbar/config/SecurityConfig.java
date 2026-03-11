@@ -42,7 +42,9 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://localhost:3000",
                 "https://*.vercel.app",
-                "https://media-luna-production.up.railway.app"));
+                "https://media-luna-production.up.railway.app",
+                "https://medialuna-eventos.com",
+                "https://www.medialuna-eventos.com"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
