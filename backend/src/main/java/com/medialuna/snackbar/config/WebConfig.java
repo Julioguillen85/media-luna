@@ -21,6 +21,8 @@ public class WebConfig implements WebMvcConfigurer {
                         "http://localhost:5173",
                         "http://localhost:3000",
                         "https://*.vercel.app",
+                        "https://medialuna-eventos.com",
+                        "https://www.medialuna-eventos.com",
                         frontendUrl)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
