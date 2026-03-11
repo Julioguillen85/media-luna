@@ -49,7 +49,40 @@ public class ApiController {
     }
 
     @PostMapping("/products")
+    @Transactional // IMPORTANTE para que la actualización de hijos funcione
     public Product saveProduct(@RequestBody Product product) {
+        if (product.getId() != null) {
+            // Es un UPDATE
+            return productRepository.findById(product.getId()).map(existingProduct -> {
+                // 1. Actualizamos datos básicos del producto
+                existingProduct.setName(product.getName());
+                existingProduct.setDescription(product.getDescription());
+                existingProduct.setPrice(product.getPrice());
+                existingProduct.setImg(product.getImg());
+                existingProduct.setProductType(product.getProductType());
+                existingProduct.setVisible(product.isVisible());
+
+                // 2. Manejo de PriceTiers (La parte crítica)
+                // Limpiamos los anteriores y agregamos los nuevos para evitar el conflicto de IDs
+                if (existingProduct.getPriceTiers() != null) {
+                    existingProduct.getPriceTiers().clear();
+                    if (product.getPriceTiers() != null) {
+                        product.getPriceTiers().forEach(tier -> {
+                            tier.setProduct(existingProduct);
+                            // Truco: Al setear el ID en null del tier que viene de React,
+                            // forzamos a que Hibernate genere nuevos o use la secuencia correctamente
+                            // si es que el orphanRemoval está activo en la entidad.
+                            tier.setId(null); 
+                            existingProduct.getPriceTiers().add(tier);
+                        });
+                    }
+                }
+
+                return productRepository.save(existingProduct);
+            }).orElseGet(() -> productRepository.save(product));
+        }
+
+        // Es un INSERT nuevo
         return productRepository.save(product);
     }
 
@@ -153,6 +186,8 @@ public class ApiController {
     private com.medialuna.snackbar.service.EmailService emailService;
     @Autowired
     private com.medialuna.snackbar.service.PushNotificationService pushNotificationService;
+    @Autowired
+    private com.medialuna.snackbar.service.SseNotificationService sseNotificationService;
 
     @PostMapping("/orders")
     public CustomerOrder createOrder(@RequestBody CustomerOrder order) {
@@ -192,6 +227,15 @@ public class ApiController {
             pushNotificationService.sendOrderNotification(saved);
         } catch (Exception e) {
             log.error("Error sending push notification", e);
+        }
+
+        try {
+            // Construir un JSON simple a mano para el evento SSE
+            String sseJson = String.format("{\"id\":%d, \"customer\":\"%s\", \"total\":%.2f}", 
+                saved.getId(), saved.getCustomer(), saved.getTotal() != null ? saved.getTotal() : 0.0);
+            sseNotificationService.sendOrderAlert(sseJson);
+        } catch (Exception e) {
+            log.error("Error sending SSE realtime notification", e);
         }
 
         return saved;

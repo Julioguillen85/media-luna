@@ -5,8 +5,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 
@@ -23,14 +27,19 @@ public class EmailService {
     @Value("${admin.email:medialuna.frutibar@gmail.com}")
     private String adminEmail;
 
+    @Autowired
+    private JavaMailSender mailSender;
+
     private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
     /**
      * Send an email using Resend HTTP API (works on Railway where SMTP is blocked)
+     * Fallbacks to SMTP (JavaMailSender) if Resend is not configured.
      */
     private void sendEmail(String to, String subject, String htmlContent) {
-        if (resendApiKey == null || resendApiKey.equals("re_DISABLED")) {
-            log.warn("⚠️ Resend API key not configured. Email not sent to: {}", to);
+        if (resendApiKey == null || resendApiKey.equals("re_DISABLED") || resendApiKey.isBlank()) {
+            log.info("⚠️ Resend API key not configured. Fallback to JavaMailSender for: {}", to);
+            sendEmailSmtp(to, subject, htmlContent);
             return;
         }
         try {
@@ -55,6 +64,23 @@ public class EmailService {
             }
         } catch (Exception e) {
             log.error("❌ Error enviando email via Resend a {}: {}", to, e.getMessage());
+        }
+    }
+
+    private void sendEmailSmtp(String to, String subject, String htmlContent) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("✅ Email enviado exitosamente a {} via SMTP", to);
+        } catch (Exception e) {
+            log.error("❌ Error enviando email via SMTP a {}: {}", to, e.getMessage());
         }
     }
 
@@ -247,6 +273,33 @@ public class EmailService {
                     + String.format("%.2f", computedDiscount) + "</td></tr>";
         }
 
+        String paymentSectionHtml = "";
+        if (order.getPaymentLink() != null) {
+            double depositAmount = Math.min(500.0, orderTotal);
+            double remainingBalance = orderTotal - depositAmount;
+
+            String balanceHtml = "";
+            if (remainingBalance > 0) {
+                balanceHtml = "<div style='margin-top: 15px;'><span style='color: #0369a1; font-size: 14px; font-weight: bold; background-color: #e0f2fe; padding: 8px 15px; border-radius: 5px; display: inline-block;'>El resto ($"
+                        + String.format("%.2f", remainingBalance) + " MXN) se liquida según acordado con Media Luna.</span></div>";
+            }
+
+            paymentSectionHtml = "<div style='text-align: center; margin-top: 30px; background-color: #f0f9ff; padding: 25px; border-radius: 8px; border-left: 4px solid #009ee3;'>"
+                    + "<h3 style='color: #0369a1; margin-top: 0; font-size: 18px;'>💳 Aparta tu fecha</h3>"
+                    + "<p style='color: #334155; font-size: 15px; margin-bottom: 20px; line-height: 1.5;'>Para asegurar tu reservación, puedes realizar el pago de tu anticipo de <strong>$"
+                    + String.format("%.2f", depositAmount)
+                    + " MXN</strong> de forma rápida y segura a través de Mercado Pago.</p>"
+                    + "<a href='" + order.getPaymentLink()
+                    + "' style='background-color: #009ee3; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; width: 80%; max-width: 300px;'>Pagar Anticipo de $"
+                    + String.format("%.2f", depositAmount) + "</a>"
+                    + balanceHtml
+                    + "<p style='color: #64748b; font-size: 14px; margin-top: 25px; margin-bottom: 15px;'>¿Prefieres pagar por transferencia o necesitas ayuda?</p>"
+                    + "<a href='https://wa.me/523123099318?text=Hola,%20tengo%20dudas%20con%20el%20pago%20de%20mi%20pedido%20%23"
+                    + order.getId()
+                    + "' style='background-color: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 15px; width: 80%; max-width: 300px;'>Contactar por WhatsApp</a>"
+                    + "</div>";
+        }
+
         String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 10px; overflow: hidden;'>"
                 +
                 "<div style='background-color: #10b981; color: white; padding: 20px; text-align: center;'>" +
@@ -272,25 +325,7 @@ public class EmailService {
                 + String.format("%.2f", orderTotal) + "</td></tr>" +
                 "</tfoot>" +
                 "</table>" +
-                (order.getPaymentLink() != null
-                        ? "<div style='text-align: center; margin-top: 30px; background-color: #f0f9ff; padding: 25px; border-radius: 8px; border-left: 4px solid #009ee3;'>"
-                                +
-                                "<h3 style='color: #0369a1; margin-top: 0; font-size: 18px;'>💳 Aparta tu fecha</h3>"
-                                +
-                                "<p style='color: #334155; font-size: 15px; margin-bottom: 20px; line-height: 1.5;'>Para asegurar tu reservación, puedes realizar el pago de tu anticipo de $500 MXN de forma rápida y segura a través de Mercado Pago.</p>"
-                                +
-                                "<a href='" + order.getPaymentLink()
-                                + "' style='background-color: #009ee3; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px; width: 80%; max-width: 300px;'>Pagar con Mercado Pago</a>"
-                                +
-                                "<p style='color: #64748b; font-size: 14px; margin-top: 20px; margin-bottom: 15px;'>¿Prefieres pagar por transferencia o necesitas ayuda?</p>"
-                                +
-                                "<a href='https://wa.me/523123099318?text=Hola,%20tengo%20dudas%20con%20el%20pago%20de%20mi%20pedido%20%23"
-                                + order.getId() + "'"
-                                + " style='background-color: #25D366; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 15px; width: 80%; max-width: 300px;'>Contactar por WhatsApp</a>"
-                                +
-                                "</div>"
-                        : "")
-                +
+                paymentSectionHtml +
                 "<div style='text-align: center; margin-top: 30px; background-color: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;'>"
                 +
                 "<h3 style='color: #475569; margin-top: 0; font-size: 16px; margin-bottom: 8px;'>Políticas de Reservación</h3>"

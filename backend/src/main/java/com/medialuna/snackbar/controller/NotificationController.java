@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import lombok.extern.slf4j.Slf4j;
+import com.medialuna.snackbar.service.SseNotificationService;
 
 import java.util.Map;
 
@@ -18,6 +20,15 @@ public class NotificationController {
 
     @Autowired
     private PushNotificationService pushNotificationService;
+
+    @Autowired
+    private SseNotificationService sseNotificationService;
+
+    @GetMapping("/stream")
+    public SseEmitter streamNotifications() {
+        log.info("📡 Nuevo cliente admin conectado a notificaciones en tiempo real (SSE)");
+        return sseNotificationService.subscribe();
+    }
 
     @Value("${vapid.public.key}")
     private String publicKey;
