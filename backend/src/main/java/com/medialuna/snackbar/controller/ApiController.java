@@ -62,19 +62,63 @@ public class ApiController {
                 existingProduct.setProductType(product.getProductType());
                 existingProduct.setVisible(product.isVisible());
 
-                // 2. Manejo de PriceTiers (La parte crítica)
-                // Limpiamos los anteriores y agregamos los nuevos para evitar el conflicto de IDs
+                // 2. Manejo de PriceTiers (Sincronización segura por ID)
                 if (existingProduct.getPriceTiers() != null) {
-                    existingProduct.getPriceTiers().clear();
-                    if (product.getPriceTiers() != null) {
-                        product.getPriceTiers().forEach(tier -> {
-                            tier.setProduct(existingProduct);
-                            // Truco: Al setear el ID en null del tier que viene de React,
-                            // forzamos a que Hibernate genere nuevos o use la secuencia correctamente
-                            // si es que el orphanRemoval está activo en la entidad.
-                            tier.setId(null); 
-                            existingProduct.getPriceTiers().add(tier);
-                        });
+                    if (product.getPriceTiers() == null) {
+                        existingProduct.getPriceTiers().clear();
+                    } else {
+                        java.util.List<PriceTier> incomingTiers = product.getPriceTiers();
+                        
+                        // Eliminar los que ya no vienen en el request
+                        existingProduct.getPriceTiers().removeIf(existing -> 
+                            existing.getId() != null && 
+                            incomingTiers.stream().noneMatch(inc -> existing.getId().equals(inc.getId()))
+                        );
+                        
+                        // Actualizar existentes o agregar nuevos
+                        for (PriceTier inc : incomingTiers) {
+                            inc.setProduct(existingProduct);
+                            if (inc.getId() != null) {
+                                existingProduct.getPriceTiers().stream()
+                                    .filter(e -> inc.getId().equals(e.getId()))
+                                    .findFirst()
+                                    .ifPresent(e -> {
+                                        e.setMinGuests(inc.getMinGuests());
+                                        e.setMaxGuests(inc.getMaxGuests());
+                                        e.setPrice(inc.getPrice());
+                                    });
+                            } else {
+                                existingProduct.getPriceTiers().add(inc);
+                            }
+                        }
+                    }
+                }
+                
+                // 3. Manejo de QuarterPriceTiers
+                if (existingProduct.getQuarterPriceTiers() != null) {
+                    if (product.getQuarterPriceTiers() == null) {
+                        existingProduct.getQuarterPriceTiers().clear();
+                    } else {
+                        java.util.List<PriceTier> incomingQuarterTiers = product.getQuarterPriceTiers();
+                        existingProduct.getQuarterPriceTiers().removeIf(existing -> 
+                            existing.getId() != null && 
+                            incomingQuarterTiers.stream().noneMatch(inc -> existing.getId().equals(inc.getId()))
+                        );
+                        for (PriceTier inc : incomingQuarterTiers) {
+                            inc.setQuarterProduct(existingProduct);
+                            if (inc.getId() != null) {
+                                existingProduct.getQuarterPriceTiers().stream()
+                                    .filter(e -> inc.getId().equals(e.getId()))
+                                    .findFirst()
+                                    .ifPresent(e -> {
+                                        e.setMinGuests(inc.getMinGuests());
+                                        e.setMaxGuests(inc.getMaxGuests());
+                                        e.setPrice(inc.getPrice());
+                                    });
+                            } else {
+                                existingProduct.getQuarterPriceTiers().add(inc);
+                            }
+                        }
                     }
                 }
 
