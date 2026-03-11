@@ -21,8 +21,13 @@ export function usePWA() {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isInstallable, setIsInstallable] = useState(false);
     const [isSubscribed, setIsSubscribed] = useState(false);
+    const [isInStandaloneMode, setIsInStandaloneMode] = useState(false);
 
     useEffect(() => {
+        // Detect if the app is running in standalone mode (installed PWA)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        setIsInStandaloneMode(!!isStandalone);
+
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -69,7 +74,7 @@ export function usePWA() {
         return false;
     };
 
-    const subscribeToPush = async () => {
+    const subscribeToPush = async (force = false) => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
             console.error('Push missing');
             return false;
@@ -80,6 +85,14 @@ export function usePWA() {
             if (permission !== 'granted') return false;
 
             const registration = await navigator.serviceWorker.ready;
+
+            // If forcing, try to unsubscribe first to get a fresh subscription
+            if (force) {
+                const existingSub = await registration.pushManager.getSubscription();
+                if (existingSub) {
+                    await existingSub.unsubscribe();
+                }
+            }
 
             const res = await fetch(`${API_URL}/push/public-key`);
             const data = await res.json();
@@ -111,6 +124,7 @@ export function usePWA() {
         isInstallable,
         installPWA,
         isSubscribed,
-        subscribeToPush
+        subscribeToPush,
+        isInStandaloneMode
     };
 }

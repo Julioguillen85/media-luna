@@ -1,13 +1,19 @@
-const CACHE_VERSION = 'v1.0.1'; // Force PWA cache bust
+const CACHE_VERSION = 'v1.0.2'; // Force PWA cache bust
 
 self.addEventListener('install', event => {
     self.skipWaiting();
-}); self.addEventListener('activate', event => {
+});
+
+self.addEventListener('activate', event => {
     event.waitUntil(clients.claim());
 });
 
 self.addEventListener('push', event => {
-    if (!event.data) return;
+    console.log('Push event received', event);
+    if (!event.data) {
+        console.warn('Push event received with no data');
+        return;
+    }
 
     let title = '¡Nuevo Pedido!';
     let options = {
@@ -16,20 +22,27 @@ self.addEventListener('push', event => {
         badge: '/icons/icon-192.png',
         vibrate: [200, 100, 200, 100, 200],
         data: { url: '/admin' },
-        requireInteraction: true
+        requireInteraction: true,
+        tag: 'new-order' // Avoid multiple notifications for the same event
     };
 
     try {
         const data = event.data.json();
+        console.log('Push data received:', data);
         title = data.title || title;
         options.body = data.body || options.body;
-        options.icon = data.icon || options.icon;
+        if (data.icon) options.icon = data.icon;
         if (data.url) options.data.url = data.url;
     } catch (e) {
         console.error('Error parsing push JSON payload:', e);
+        // Fallback to text payload if not JSON
+        try {
+            options.body = event.data.text();
+        } catch (textErr) {
+            console.error('Error parsing push text payload:', textErr);
+        }
     }
 
-    // Must return the promise directly to waitUntil so the OS knows when it's done
     event.waitUntil(
         self.registration.showNotification(title, options)
     );
