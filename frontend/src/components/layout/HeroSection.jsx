@@ -26,24 +26,52 @@ export default function HeroSection({ openBot, setActiveCategory, options }) {
     return (
         <div className="w-full relative overflow-hidden shadow-xl dark:shadow-2xl px-6 py-12 md:px-12 md:py-20 transition-colors duration-500 min-h-[75vh] md:min-h-[85vh] flex flex-col justify-center">
             {/* Background Image Layer - Desktop */}
-            {desktopBanners.map((bg, idx) => (
-                <img
-                    key={`desk-${idx}`}
-                    src={bg.replace(/["']/g, '')}
-                    alt={`Banner Desktop ${idx + 1}`}
-                    className={`hidden md:block absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % desktopBanners.length ? 'opacity-100' : 'opacity-0'}`}
-                />
-            ))}
+            {desktopBanners.map((bg, idx) => {
+                const url = bg.replace(/["']/g, '');
+                const isVid = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') || url.toLowerCase().endsWith('.mov') || url.includes('/video/upload/');
+                return isVid ? (
+                    <video
+                        key={`desk-${idx}`}
+                        src={url}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={`hidden md:block absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % desktopBanners.length ? 'opacity-100' : 'opacity-0'}`}
+                    />
+                ) : (
+                    <img
+                        key={`desk-${idx}`}
+                        src={url}
+                        alt={`Banner Desktop ${idx + 1}`}
+                        className={`hidden md:block absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % desktopBanners.length ? 'opacity-100' : 'opacity-0'}`}
+                    />
+                );
+            })}
 
             {/* Background Image Layer - Mobile */}
-            {mobileBanners.map((bg, idx) => (
-                <img
-                    key={`mob-${idx}`}
-                    src={bg.replace(/["']/g, '')}
-                    alt={`Banner Mobile ${idx + 1}`}
-                    className={`md:hidden absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % mobileBanners.length ? 'opacity-100' : 'opacity-0'}`}
-                />
-            ))}
+            {mobileBanners.map((bg, idx) => {
+                const url = bg.replace(/["']/g, '');
+                const isVid = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') || url.toLowerCase().endsWith('.mov') || url.includes('/video/upload/');
+                return isVid ? (
+                    <video
+                        key={`mob-${idx}`}
+                        src={url}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={`md:hidden absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % mobileBanners.length ? 'opacity-100' : 'opacity-0'}`}
+                    />
+                ) : (
+                    <img
+                        key={`mob-${idx}`}
+                        src={url}
+                        alt={`Banner Mobile ${idx + 1}`}
+                        className={`md:hidden absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-1000 ease-in-out ${idx === currentBannerIdx % mobileBanners.length ? 'opacity-100' : 'opacity-0'}`}
+                    />
+                );
+            })}
 
             {/* Soft Dark Overlay to ensure readability but keep image visible */}
             <div className="absolute inset-0 bg-black/30 dark:bg-black/50 z-0 transition-opacity duration-1000"></div>
