@@ -9,7 +9,7 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
     const [notifStatus, setNotifStatus] = useState('idle'); // idle | loading | success | denied
     const [activeToasts, setActiveToasts] = useState([]); // Array para almacenar eventos vivos
     const menuRef = useRef(null);
-    const { isSubscribed, subscribeToPush } = usePWA();
+    const { isSubscribed, subscribeToPush, isInStandaloneMode } = usePWA();
     const { lastOrderEvent, setLastOrderEvent } = useSSE(isAdmin);
 
     useEffect(() => {
@@ -47,22 +47,36 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
     }, []);
 
     const handleToggleNotifications = async () => {
-        if (isSubscribed) return; // Ya está suscrito
+        // Si ya está suscrito y NO es forzado, no hacer nada (o preguntar si quiere refrescar)
+        if (isSubscribed && !confirm('Ya estás suscrito. ¿Deseas refrescar la suscripción para asegurar que las alertas lleguen a este dispositivo?')) {
+            return;
+        }
+
         if (!('Notification' in window)) {
-            alert('Tu navegador no soporta notificaciones. Abre la app instalada desde la pantalla de inicio.');
+            alert('Tu navegador no soporta notificaciones nativas.');
             return;
         }
-        // Si el permiso ya estaba bloqueado, mostrar instrucciones de desbloqueo
+
+        // iOS alert if NOT in standalone mode
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS && !isInStandaloneMode) {
+            alert('En iPhone, las notificaciones solo funcionan si añades la app a tu pantalla de inicio.\n\nUsa el botón "Compartir" y selecciona "Añadir a pantalla de inicio".');
+            return;
+        }
+
         if (Notification.permission === 'denied') {
-            alert('Las notificaciones están bloqueadas en tu navegador.\n\nPara habilitarlas:\n• iPhone: Ajustes > Safari > Configuración avanzada > Sitios web > Notificaciones\n• Android/Chrome: chrome://settings/content/notifications\n• Firefox: Configuración > Privacidad > Notificaciones');
+            alert('Las notificaciones están bloqueadas.\n\nPara habilitarlas:\n• Ajustes del navegador o del sistema > Notificaciones > Permitir para Media Luna.');
             return;
         }
+
         setNotifStatus('loading');
         try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                const ok = await subscribeToPush();
+                // Force resubscribe logic
+                const ok = await subscribeToPush(true); 
                 setNotifStatus(ok ? 'success' : 'idle');
+                if (ok) alert('✅ Notificaciones configuradas correctamente en este dispositivo.');
             } else {
                 setNotifStatus('denied');
             }
@@ -101,10 +115,10 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                         {isAdmin && (
                             <button
                                 onClick={handleToggleNotifications}
-                                disabled={isSubscribed || notifStatus === 'loading'}
-                                title={isSubscribed ? 'Alertas activas' : 'Activar notificaciones'}
+                                disabled={notifStatus === 'loading'}
+                                title={isSubscribed ? 'Refrescar suscripción' : 'Activar notificaciones'}
                                 className={`relative p-2 rounded-xl transition-colors disabled:cursor-default ${isSubscribed || notifStatus === 'success'
-                                    ? 'text-emerald-500'
+                                    ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
                                     : notifStatus === 'denied'
                                         ? 'text-red-400'
                                         : 'text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-slate-800'
@@ -112,7 +126,7 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                             >
                                 {notifStatus === 'denied'
                                     ? <BellOff size={20} />
-                                    : <Bell size={20} />}
+                                    : <Bell size={20} className={isSubscribed ? 'fill-current' : ''} />}
                                     
                                 {/* Badge SSE vivo. Se muestran cuantas notificaciones hayan llegado */}
                                 {activeToasts.length > 0 && (
