@@ -27,8 +27,9 @@ export default function HeroSection({ openBot, setActiveCategory, options }) {
         <div className="w-full relative overflow-hidden shadow-xl dark:shadow-2xl px-6 py-12 md:px-12 md:py-20 transition-colors duration-500 min-h-[75vh] md:min-h-[85vh] flex flex-col justify-center">
             {/* Background Image Layer - Desktop */}
             {desktopBanners.map((bg, idx) => {
-                const url = bg.replace(/["']/g, '');
-                const isVid = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') || url.toLowerCase().endsWith('.mov') || url.includes('/video/upload/');
+                let url = bg.replace(/["']/g, '');
+                if (url.toLowerCase().endsWith('.mov')) url = url.replace(/\.mov$/i, '.mp4');
+                const isVid = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') || url.includes('/video/upload/');
                 return isVid ? (
                     <video
                         key={`desk-${idx}`}
@@ -51,8 +52,9 @@ export default function HeroSection({ openBot, setActiveCategory, options }) {
 
             {/* Background Image Layer - Mobile */}
             {mobileBanners.map((bg, idx) => {
-                const url = bg.replace(/["']/g, '');
-                const isVid = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') || url.toLowerCase().endsWith('.mov') || url.includes('/video/upload/');
+                let url = bg.replace(/["']/g, '');
+                if (url.toLowerCase().endsWith('.mov')) url = url.replace(/\.mov$/i, '.mp4');
+                const isVid = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') || url.includes('/video/upload/');
                 return isVid ? (
                     <video
                         key={`mob-${idx}`}

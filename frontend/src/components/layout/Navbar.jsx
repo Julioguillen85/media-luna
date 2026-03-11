@@ -1,13 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShoppingCart, Menu, X, User, LogOut, LayoutDashboard, Bell, BellOff } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogOut, LayoutDashboard, Bell, BellOff, XCircle } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import { usePWA } from '../../hooks/usePWA';
+import { useSSE } from '../../hooks/useSSE';
 
 export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogin, view, setIsCartModalOpen, onLogout, isSidebarOpen, setIsSidebarOpen }) {
     const [menuOpen, setMenuOpen] = useState(false);
     const [notifStatus, setNotifStatus] = useState('idle'); // idle | loading | success | denied
+    const [activeToasts, setActiveToasts] = useState([]); // Array para almacenar eventos vivos
     const menuRef = useRef(null);
     const { isSubscribed, subscribeToPush } = usePWA();
+    const { lastOrderEvent, setLastOrderEvent } = useSSE(isAdmin);
+
+    useEffect(() => {
+        // Al recibir un evento SSE, empujarlo a la cola de Toasts visibles
+        if (lastOrderEvent) {
+            const newToast = { id: Date.now(), ...lastOrderEvent };
+            setActiveToasts(prev => [...prev, newToast]);
+            
+            // Auto-cerrar el toast después de 8 segundos
+            setTimeout(() => {
+                setActiveToasts(prev => prev.filter(t => t.id !== newToast.id));
+            }, 8000);
+            
+            setLastOrderEvent(null); // Limpiar para futuros eventos
+        }
+    }, [lastOrderEvent, setLastOrderEvent]);
+
 
     // Cerrar el menú al hacer click fuera
     useEffect(() => {
@@ -84,7 +103,7 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                                 onClick={handleToggleNotifications}
                                 disabled={isSubscribed || notifStatus === 'loading'}
                                 title={isSubscribed ? 'Alertas activas' : 'Activar notificaciones'}
-                                className={`p-2 rounded-xl transition-colors disabled:cursor-default ${isSubscribed || notifStatus === 'success'
+                                className={`relative p-2 rounded-xl transition-colors disabled:cursor-default ${isSubscribed || notifStatus === 'success'
                                     ? 'text-emerald-500'
                                     : notifStatus === 'denied'
                                         ? 'text-red-400'
@@ -94,6 +113,13 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                                 {notifStatus === 'denied'
                                     ? <BellOff size={20} />
                                     : <Bell size={20} />}
+                                    
+                                {/* Badge SSE vivo. Se muestran cuantas notificaciones hayan llegado */}
+                                {activeToasts.length > 0 && (
+                                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg animate-pulse">
+                                        {activeToasts.length}
+                                    </span>
+                                )}
                             </button>
                         )}
 
@@ -150,6 +176,42 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                     </div>
                 </div>
             </div>
+
+            {/* SSE Toasts Container */}
+            {isAdmin && activeToasts.length > 0 && (
+                <div className="fixed top-20 right-4 z-50 flex flex-col gap-3 pointer-events-none">
+                    {activeToasts.map(toast => (
+                        <div key={toast.id} className="pointer-events-auto bg-white dark:bg-slate-800 border-l-4 border-rose-500 shadow-2xl rounded-lg p-4 w-72 md:w-80 shrink-0 transform transition-all duration-500 translate-x-0">
+                            <div className="flex justify-between items-start mb-1">
+                                <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                                    <span role="img" aria-label="alert">🚨</span> Nuevo Pedido #{toast.id}
+                                </h4>
+                                <button 
+                                    onClick={() => setActiveToasts(prev => prev.filter(t => t.id !== toast.id))}
+                                    className="text-slate-400 hover:text-rose-500 transition"
+                                >
+                                    <XCircle size={18} />
+                                </button>
+                            </div>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
+                                <strong>De:</strong> {toast.customer}
+                            </p>
+                            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 border-t border-slate-100 dark:border-slate-700 pt-2 mt-2">
+                                Total: ${Number(toast.total).toFixed(2)} MXN
+                            </p>
+                            <button 
+                                onClick={() => {
+                                    setView('admin');
+                                    setActiveToasts(prev => prev.filter(t => t.id !== toast.id));
+                                }}
+                                className="w-full mt-3 bg-slate-100 dark:bg-slate-700 hover:bg-rose-50 dark:hover:bg-slate-600 hover:text-rose-600 text-slate-700 dark:text-white text-xs font-bold py-2 rounded transition"
+                            >
+                                Ver en Panel
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
         </nav>
     );
 }

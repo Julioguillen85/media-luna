@@ -575,28 +575,29 @@ export default function App() {
 
       {view !== 'admin' && <Footer />}
 
-      {/* Floating Buttons */}
-      {cart.length > 0 && (
-        <button onClick={() => setIsCartModalOpen(true)} className="fixed max-md:bottom-[96px] md:bottom-6 right-6 z-40 bg-gradient-to-r from-rose-500 to-rose-600 text-white p-4 rounded-full shadow-2xl hover:shadow-rose-300 transition-all hover:scale-110 active:scale-95">
-          <ShoppingCart size={24} />
-          <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-pulse">{cart.length}</span>
-        </button>
-      )}
+      {/* Floating Buttons Group */}
+      <div className="fixed max-md:bottom-[96px] md:bottom-6 right-6 z-40 flex flex-col items-center gap-4 transition-all duration-500">
+        
+        {/* Floating AI Avatar */}
+        {view !== 'admin' && !isBotOpen && (
+            <button onClick={() => setIsBotOpen(true)} className="bg-slate-900 dark:bg-black text-white p-4 mx-2 md:mx-0 rounded-full shadow-2xl hover:shadow-rose-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center relative animate-shake">
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-800 dark:text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 cursor-pointer whitespace-nowrap">
+                ¿Necesitas ayuda?
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rotate-45 border-b border-r border-slate-200/50 dark:border-slate-700/50"></div>
+              </div>
+              <Bot size={32} className="text-rose-300 dark:text-rose-400" />
+              <span className="absolute top-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900 dark:border-black"></span>
+            </button>
+        )}
 
-
-      {view !== 'admin' && !isBotOpen && (
-        <div className={`fixed z-40 transition-all duration-500 ease-in-out right-10 ${cart.length > 0 ? 'max-md:bottom-[170px] md:bottom-28' : 'max-md:bottom-[96px] md:bottom-6'}`}>
-          <button onClick={() => setIsBotOpen(true)} className="bg-slate-900 dark:bg-black text-white p-3 md:p-4 rounded-full shadow-2xl hover:shadow-rose-500/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center relative animate-shake">
-            {/* Tooltip flotante con fondo transparente */}
-            <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-800 dark:text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 cursor-pointer whitespace-nowrap">
-              ¿Necesitas ayuda?
-              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/70 dark:bg-slate-800/70 backdrop-blur-md rotate-45 border-b border-r border-slate-200/50 dark:border-slate-700/50"></div>
-            </div>
-            <Bot size={28} className="text-rose-300 dark:text-rose-400" />
-            <span className="absolute top-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-900 dark:border-black"></span>
+        {/* Floating Cart Avatar */}
+        {cart.length > 0 && (
+          <button onClick={() => setIsCartModalOpen(true)} className="relative bg-gradient-to-r from-rose-500 to-rose-600 text-white p-4 rounded-full shadow-2xl hover:shadow-rose-300 transition-all hover:scale-110 active:scale-95 animate-fade-in">
+            <ShoppingCart size={28} />
+            <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg animate-pulse">{cart.length}</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {view !== 'admin' && (
         <EnhancedChatBot isOpen={isBotOpen} setIsOpen={setIsBotOpen} products={products.filter(p => p.visible !== false)} options={options} cart={cart} onAddProducts={addToCart} onSetQuantity={setProductQuantity} onAutoFillCheckout={handleAutoFillCheckout} />
