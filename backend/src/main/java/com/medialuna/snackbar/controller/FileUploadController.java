@@ -44,18 +44,25 @@ public class FileUploadController {
         }
 
         try {
+            // Write payload directly to a temporary file instead of loading the entire byte array into RAM
+            java.io.File tempFile = java.io.File.createTempFile("upload_", "_" + file.getOriginalFilename());
+            file.transferTo(tempFile);
+
             @SuppressWarnings("unchecked")
-            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(tempFile, ObjectUtils.asMap(
                     "folder", "medialuna",
                     "resource_type", "auto"));
 
+            // Clean up the temporary file immediately to free disk space
+            tempFile.delete();
+
             String secureUrl = (String) uploadResult.get("secure_url");
-            log.info("✅ Imagen subida a Cloudinary: {}", secureUrl);
+            log.info("✅ Archivo subido a Cloudinary: {}", secureUrl);
 
             return ResponseEntity.ok(Map.of("url", secureUrl));
 
         } catch (Exception e) {
-            log.error("❌ Error subiendo imagen a Cloudinary", e);
+            log.error("❌ Error subiendo archivo a Cloudinary", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Failed to upload file: " + e.getMessage()));
         }
