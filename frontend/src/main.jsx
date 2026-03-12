@@ -5,6 +5,7 @@ import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { PWAProvider } from './context/PWAContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Logger from './utils/logger';
 
@@ -22,11 +23,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <ErrorBoundary>
             <AuthProvider>
-                <NotificationProvider>
-                    <ThemeProvider>
-                        <App />
-                    </ThemeProvider>
-                </NotificationProvider>
+                <PWAProvider>
+                    <NotificationProvider>
+                        <ThemeProvider>
+                            <App />
+                        </ThemeProvider>
+                    </NotificationProvider>
+                </PWAProvider>
             </AuthProvider>
         </ErrorBoundary>
     </React.StrictMode>,

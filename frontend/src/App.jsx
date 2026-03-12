@@ -59,7 +59,8 @@ const INITIAL_PRODUCTS = [
 const INITIAL_CATEGORIES = ["Snacks", "Bebidas", "Rentas"];
 
 import { useAuth } from './context/AuthContext';
-import { useNotification } from './context/NotificationContext';
+import { useNotification, NotificationProvider } from './context/NotificationContext';
+import { PWAProvider } from './context/PWAContext';
 import { authService } from './services/authService';
 import { isDiscountActive } from './lunitaUtils';
 

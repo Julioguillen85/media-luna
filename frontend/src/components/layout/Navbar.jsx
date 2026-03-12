@@ -46,8 +46,24 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
         }
     }, []);
 
+    const [clickCount, setClickCount] = useState(0);
+
     const handleToggleNotifications = async () => {
-        // Debug tracking for iOS
+        // Multi-click diagnostic (3 clicks in row)
+        setClickCount(prev => prev + 1);
+        setTimeout(() => setClickCount(0), 2000);
+
+        if (clickCount >= 2) {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            const hasNotification = 'Notification' in window;
+            const hasPush = 'PushManager' in window;
+            const hasSW = 'serviceWorker' in navigator;
+            alert(`--- DIAGNÓSTICO PWA ---\nInstalada: ${isInStandaloneMode}\nSuscrito: ${isSubscribed}\niOS: ${isIOS}\nNotification: ${hasNotification}\nPushManager: ${hasPush}\nServiceWorker: ${hasSW}\nPermiso: ${hasNotification ? Notification.permission : 'N/A'}`);
+            setClickCount(0);
+            return;
+        }
+
+        // Production logic
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         const hasPush = 'PushManager' in window;
         const hasSW = 'serviceWorker' in navigator;
@@ -58,7 +74,7 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
             }
 
             if (!('Notification' in window)) {
-                console.error('ERROR: Tu navegador no soporta Notificaciones.');
+                alert('ERROR: Tu navegador no soporta Notificaciones.');
                 return;
             }
 
@@ -66,32 +82,33 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
                 if (isIOS && !isInStandaloneMode) {
                    alert('iPhone: Usa el botón "Compartir" y selecciona "Añadir a pantalla de inicio" para activar notificaciones.');
                 } else {
-                   console.warn(`Soporte insuficiente: SW=${hasSW}, Push=${hasPush}`);
+                   alert(`Error de soporte PWA: Push=${hasPush}, SW=${hasSW}. Asegúrate de estar usando la app instalada.`);
                 }
                 return;
             }
 
+            // iOS standalone check
             if (isIOS && !isInStandaloneMode) {
-                alert('iPhone: Usa el botón "Compartir" y selecciona "Añadir a pantalla de inicio" para activar notificaciones.');
+                alert('iPhone: Las notificaciones solo funcionan si añades la app a tu pantalla de inicio.');
                 return;
             }
 
             if (Notification.permission === 'denied') {
-                alert('Las notificaciones están bloqueadas. Por favor, habilítalas en los ajustes de tu dispositivo/navegador.');
+                alert('Las notificaciones están bloqueadas. Ve a Ajustes > (Buscar App o Safari) > Notificaciones y permite el acceso.');
                 return;
             }
 
             setNotifStatus('loading');
-            
             const permission = await Notification.requestPermission();
             
             if (permission === 'granted') {
                 const ok = await subscribeToPush(true); 
                 setNotifStatus(ok ? 'success' : 'idle');
                 if (ok) {
-                    // Small toast or silent success is better than alert in production, 
-                    // but we'll keep a friendly one since it's a manual action.
-                    console.log('✅ Notificaciones configuradas correctamente.');
+                    alert('✅ ¡Listo! Notificaciones activadas en este dispositivo.');
+                    console.log('✅ Suscripción exitosa');
+                } else {
+                    alert('❌ Hubo un error al sincronizar con el servidor. Reintenta pronto.');
                 }
             } else {
                 setNotifStatus('denied');
@@ -99,6 +116,7 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
         } catch (err) {
             console.error('Notification error:', err);
             setNotifStatus('idle');
+            alert('Error inesperado: ' + err.message);
         }
     };
 
