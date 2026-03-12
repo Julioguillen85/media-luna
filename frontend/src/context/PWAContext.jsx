@@ -77,11 +77,17 @@ export function PWAProvider({ children }) {
     };
 
     const subscribeToPush = async (force = false) => {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert("SOPORTE: PushManager no detectado");
+            return false;
+        }
 
         try {
             const permission = await Notification.requestPermission();
-            if (permission !== 'granted') return false;
+            if (permission !== 'granted') {
+                alert("PERMISO: Denagado (" + permission + ")");
+                return false;
+            }
 
             const registration = await navigator.serviceWorker.ready;
 
@@ -90,14 +96,27 @@ export function PWAProvider({ children }) {
                 if (existingSub) await existingSub.unsubscribe();
             }
 
+            // Step 1: Public Key
             const res = await fetch(`${API_URL}/push/public-key`);
+            if (!res.ok) {
+                alert("ERROR: No se pudo obtener la llave pública del servidor");
+                return false;
+            }
             const { publicKey } = await res.json();
 
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(publicKey)
-            });
+            // Step 2: Browser Subscribe
+            let subscription;
+            try {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+            } catch (e) {
+                alert("ERROR Navegador: " + e.message);
+                return false;
+            }
 
+            // Step 3: Server Subscribe
             const response = await fetch(`${API_URL}/push/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -107,10 +126,14 @@ export function PWAProvider({ children }) {
             if (response.ok) {
                 setIsSubscribed(true);
                 return true;
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                alert("ERROR Servidor (" + response.status + "): " + (errorData.error || "Error desconocido"));
+                return false;
             }
-            return false;
         } catch (error) {
             console.error('PWA: Failed to subscribe:', error);
+            alert("ERROR CRÍTICO: " + error.message);
             return false;
         }
     };
