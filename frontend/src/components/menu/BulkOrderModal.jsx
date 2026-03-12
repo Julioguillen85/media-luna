@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 
-export default function BulkOrderModal({ product, products = [], isOpen, onClose, onConfirm }) {
+export default function BulkOrderModal({ product, products = [], customization = null, isOpen, onClose, onConfirm }) {
     const [peopleCount, setPeopleCount] = useState('30');
     const [splitMode, setSplitMode] = useState(false);
     const [splitValue, setSplitValue] = useState(0);
@@ -147,7 +147,10 @@ export default function BulkOrderModal({ product, products = [], isOpen, onClose
                     })()}
                 </div>
                 {(() => {
-                    const tiers = product.priceTiers || [];
+                    let tiers = product.priceTiers || [];
+                    if (customization && customization.size === 'quarter') {
+                        tiers = product.quarterPriceTiers || product.priceTiers || [];
+                    }
                     const minCount = (product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30;
                     const n = numericCount < minCount ? minCount : numericCount;
                     const matching = tiers.find(t => n >= t.minGuests && n <= t.maxGuests);
