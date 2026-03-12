@@ -47,36 +47,52 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
     }, []);
 
     const handleToggleNotifications = async () => {
-        // Si ya está suscrito y NO es forzado, no hacer nada (o preguntar si quiere refrescar)
-        if (isSubscribed && !confirm('Ya estás suscrito. ¿Deseas refrescar la suscripción para asegurar que las alertas lleguen a este dispositivo?')) {
-            return;
-        }
-
-        if (!('Notification' in window)) {
-            alert('Tu navegador no soporta notificaciones nativas.');
-            return;
-        }
-
-        // iOS alert if NOT in standalone mode
+        // Debug tracking for iOS
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (isIOS && !isInStandaloneMode) {
-            alert('En iPhone, las notificaciones solo funcionan si añades la app a tu pantalla de inicio.\n\nUsa el botón "Compartir" y selecciona "Añadir a pantalla de inicio".');
-            return;
-        }
+        const hasPush = 'PushManager' in window;
+        const hasSW = 'serviceWorker' in navigator;
 
-        if (Notification.permission === 'denied') {
-            alert('Las notificaciones están bloqueadas.\n\nPara habilitarlas:\n• Ajustes del navegador o del sistema > Notificaciones > Permitir para Media Luna.');
-            return;
-        }
-
-        setNotifStatus('loading');
         try {
+            if (isSubscribed && !confirm('Ya estás suscrito. ¿Deseas refrescar la suscripción para asegurar que las alertas lleguen a este dispositivo?')) {
+                return;
+            }
+
+            if (!('Notification' in window)) {
+                console.error('ERROR: Tu navegador no soporta Notificaciones.');
+                return;
+            }
+
+            if (!hasPush || !hasSW) {
+                if (isIOS && !isInStandaloneMode) {
+                   alert('iPhone: Usa el botón "Compartir" y selecciona "Añadir a pantalla de inicio" para activar notificaciones.');
+                } else {
+                   console.warn(`Soporte insuficiente: SW=${hasSW}, Push=${hasPush}`);
+                }
+                return;
+            }
+
+            if (isIOS && !isInStandaloneMode) {
+                alert('iPhone: Usa el botón "Compartir" y selecciona "Añadir a pantalla de inicio" para activar notificaciones.');
+                return;
+            }
+
+            if (Notification.permission === 'denied') {
+                alert('Las notificaciones están bloqueadas. Por favor, habilítalas en los ajustes de tu dispositivo/navegador.');
+                return;
+            }
+
+            setNotifStatus('loading');
+            
             const permission = await Notification.requestPermission();
+            
             if (permission === 'granted') {
-                // Force resubscribe logic
                 const ok = await subscribeToPush(true); 
                 setNotifStatus(ok ? 'success' : 'idle');
-                if (ok) alert('✅ Notificaciones configuradas correctamente en este dispositivo.');
+                if (ok) {
+                    // Small toast or silent success is better than alert in production, 
+                    // but we'll keep a friendly one since it's a manual action.
+                    console.log('✅ Notificaciones configuradas correctamente.');
+                }
             } else {
                 setNotifStatus('denied');
             }
