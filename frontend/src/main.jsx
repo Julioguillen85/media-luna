@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import * as Sentry from '@sentry/react';
 import App from './App.jsx';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
@@ -7,21 +8,26 @@ import { NotificationProvider } from './context/NotificationContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PWAProvider } from './context/PWAContext';
 import ErrorBoundary from './components/ErrorBoundary';
-import Logger from './utils/logger';
 
-// Global error handlers for uncaught exceptions outside of React lifecycle
-window.addEventListener('error', (event) => {
-    Logger.error('Global uncaught error:', event.error);
-});
-window.addEventListener('unhandledrejection', (event) => {
-    Logger.error('Unhandled promise rejection:', event.reason);
+// Initialize Sentry (does nothing if DSN is empty)
+Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN || '',
+    environment: import.meta.env.MODE || 'development',
+    integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration()
+    ],
+    tracesSampleRate: 0.3,
+    replaysSessionSampleRate: 0,
+    replaysOnErrorSampleRate: 1.0, // Graba replay cuando hay error
+    enabled: !!import.meta.env.VITE_SENTRY_DSN
 });
 
-Logger.info('Media Luna Frontend Application Initialized 🚀');
+console.info('Media Luna Frontend Application Initialized 🚀');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
-        <ErrorBoundary>
+        <Sentry.ErrorBoundary fallback={<ErrorBoundary />}>
             <AuthProvider>
                 <PWAProvider>
                     <NotificationProvider>
@@ -31,6 +37,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                     </NotificationProvider>
                 </PWAProvider>
             </AuthProvider>
-        </ErrorBoundary>
+        </Sentry.ErrorBoundary>
     </React.StrictMode>,
-)
+);
