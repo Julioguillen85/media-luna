@@ -188,6 +188,28 @@ export default function App() {
     else { addToCart(product); }
   };
 
+  const getPriceForProduct = (product, qty, customization = null) => {
+    // 1. Check for rental
+    if (product.productType === 'RENTAL') return product.rentalPricePerDay || 0;
+
+    // 2. Select the correct tiers based on size (for bowls)
+    let tiers = product.priceTiers || [];
+    if (customization && customization.size === 'quarter') {
+      tiers = product.quarterPriceTiers || product.priceTiers || [];
+    }
+
+    // 3. Find matching tier for quantity
+    const n = qty < 30 ? 30 : qty;
+    const matching = (tiers || []).find(t => n >= t.minGuests && n <= t.maxGuests);
+    const closest = (tiers || []).filter(t => t.minGuests <= n).sort((a, b) => b.minGuests - a.minGuests)[0];
+
+    if (matching) return matching.price / n;
+    if (closest) return closest.price / n;
+
+    // 4. Fallback to base price
+    return product.price || 0;
+  };
+
   const addToCart = (product, customization = null) => {
     if (!product) {
       console.warn("addToCart called with null product");
@@ -200,7 +222,7 @@ export default function App() {
       );
 
       const qty = product.quantity || 1;
-      let unitPrice = product.rentalPricePerDay || product.price || 0;
+      let unitPrice = getPriceForProduct(product, qty, customization);
 
       // If AI provided a price override, compute the unit price for this addition
       if (product.priceOverride !== undefined && product.priceOverride !== null) {
@@ -212,10 +234,10 @@ export default function App() {
         const item = newCart[existingIdx];
         const newQty = (item.quantity || 1) + qty;
 
-        // Use custom unit price if it exists, otherwise use standard unit price
+        // Use custom unit price if it exists, otherwise recalculate based on new quantity
         const currentUnitPrice = item.customUnitPrice !== undefined && item.customUnitPrice !== null
           ? item.customUnitPrice
-          : (item.rentalPricePerDay || item.price || 0);
+          : getPriceForProduct(product, newQty, customization);
 
         newCart[existingIdx] = {
           ...item,
@@ -243,7 +265,7 @@ export default function App() {
         JSON.stringify(item.customization) === JSON.stringify(customization)
       );
 
-      let unitPrice = product.rentalPricePerDay || product.price || 0;
+      let unitPrice = getPriceForProduct(product, quantity, customization);
 
       if (priceOverride !== null && quantity > 0) {
         unitPrice = priceOverride / quantity;
@@ -608,19 +630,23 @@ export default function App() {
       <BulkOrderModal
         product={productForBulk?.product}
         products={products}
+        customization={productForBulk?.customization}
         isOpen={bulkModalOpen}
         onClose={() => { setBulkModalOpen(false); setProductForBulk(null); }}
         onConfirm={(peopleCount, splitMode = false, splitValue = 0, otherElote = null) => {
           const mainProd = productForBulk.product;
 
           const addProduct = (prod, count) => {
-            const tiers = prod.priceTiers || [];
+            let tiers = prod.priceTiers || [];
+            if (productForBulk.customization && productForBulk.customization.size === 'quarter') {
+              tiers = prod.quarterPriceTiers || prod.priceTiers || [];
+            }
             // Usamos peopleCount total para buscar el tier de mayoreo de ambos
             const matchingTier = tiers.find(t => peopleCount >= t.minGuests && peopleCount <= t.maxGuests);
             const closestTier = tiers.filter(t => t.minGuests <= peopleCount).sort((a, b) => b.minGuests - a.minGuests)[0];
 
             // Calculamos el precio por persona basado en el volumen total, y luego lo multiplicamos por la cantidad dividida
-            const unitPrice = (matchingTier?.price || closestTier?.price || (prod.price * peopleCount)) / peopleCount;
+            const unitPrice = (matchingTier?.price || closestTier?.price || ((prod.price || 0) * peopleCount)) / peopleCount;
             const totalPrice = unitPrice * count;
 
             const prodWithPrice = {

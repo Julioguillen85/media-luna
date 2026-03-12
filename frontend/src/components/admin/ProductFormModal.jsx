@@ -15,7 +15,8 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
         productType: 'SNACK',
         rentalPricePerDay: '',
         specifications: {},
-        priceTiers: []
+        priceTiers: [],
+        quarterPriceTiers: []
     });
     const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState('info');
@@ -44,7 +45,8 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                 productType: product.productType || 'SNACK',
                 rentalPricePerDay: product.rentalPricePerDay || '',
                 specifications: parsedSpecs,
-                priceTiers: product.priceTiers ? product.priceTiers.map(pt => ({ minGuests: pt.minGuests, maxGuests: pt.maxGuests, price: pt.price })) : []
+                priceTiers: product.priceTiers ? product.priceTiers.map(pt => ({ id: pt.id, minGuests: pt.minGuests, maxGuests: pt.maxGuests, price: pt.price })) : [],
+                quarterPriceTiers: product.quarterPriceTiers ? product.quarterPriceTiers.map(pt => ({ id: pt.id, minGuests: pt.minGuests, maxGuests: pt.maxGuests, price: pt.price })) : []
             });
         }
     }, [product, categories]);
@@ -126,7 +128,11 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                 ...t,
                 price: Math.round(t.price * multiplier)
             }));
-            setFormData({ ...formData, priceTiers: updatedTiers });
+            const updatedQuarterTiers = formData.quarterPriceTiers.map(t => ({
+                ...t,
+                price: Math.round(t.price * multiplier)
+            }));
+            setFormData({ ...formData, priceTiers: updatedTiers, quarterPriceTiers: updatedQuarterTiers });
             setPercentageIncrease('');
         }
     };
@@ -292,6 +298,59 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                                         {(formData.priceTiers || []).length === 0 && (
                                             <p className="text-[10px] text-rose-500 mt-1 text-center font-medium">Debe añadir al menos un precio para que el producto sea válido.</p>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* Volume Pricing for 1/4 Bowls if applicable */}
+                                {formData.productType === 'SNACK' && (formData.customizable || (formData.quarterPriceTiers && formData.quarterPriceTiers.length > 0)) && (
+                                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Precios Bowl 1/4 (Botecito)</label>
+                                        </div>
+                                        <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                                            {(formData.quarterPriceTiers || []).map((tier, idx) => (
+                                                <div key={idx} className="flex gap-2 items-center">
+                                                    <div className="flex-1 relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">👤</span>
+                                                        <input type="number" placeholder="Personas" value={tier.minGuests || ''}
+                                                            onChange={e => {
+                                                                const val = parseInt(e.target.value) || 0;
+                                                                const newTiers = [...formData.quarterPriceTiers];
+                                                                newTiers[idx] = { ...tier, minGuests: val, maxGuests: val };
+                                                                setFormData({ ...formData, quarterPriceTiers: newTiers });
+                                                            }}
+                                                            className="w-full pl-8 pr-2 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-rose-400" />
+                                                    </div>
+                                                    <div className="flex-1 relative">
+                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">$</span>
+                                                        <input type="number" step="0.50" placeholder="Precio" value={tier.price || ''}
+                                                            onChange={e => {
+                                                                const val = parseFloat(e.target.value) || 0;
+                                                                const newTiers = [...formData.quarterPriceTiers];
+                                                                newTiers[idx] = { ...tier, price: val };
+                                                                setFormData({ ...formData, quarterPriceTiers: newTiers });
+                                                            }}
+                                                            className="w-full pl-7 pr-2 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-rose-400" />
+                                                    </div>
+                                                    <button type="button"
+                                                        onClick={() => {
+                                                            const newTiers = formData.quarterPriceTiers.filter((_, i) => i !== idx);
+                                                            setFormData({ ...formData, quarterPriceTiers: newTiers });
+                                                        }}
+                                                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <button type="button"
+                                            onClick={() => {
+                                                const newTiers = [...(formData.quarterPriceTiers || []), { minGuests: 0, maxGuests: 0, price: 0 }];
+                                                setFormData({ ...formData, quarterPriceTiers: newTiers });
+                                            }}
+                                            className="mt-2 w-full py-2.5 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-500 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-900/30 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors flex items-center justify-center gap-1.5">
+                                            <Plus size={14} /> Añadir precio Bowl 1/4
+                                        </button>
                                     </div>
                                 )}
 

@@ -47,18 +47,6 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
     }, []);
 
     const handleToggleNotifications = async () => {
-        // Multi-click diagnostic logic (kept but won't interfere unless triggered)
-        const currentCount = clickCount + 1;
-        setClickCount(currentCount);
-        
-        if (currentCount >= 3) {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            alert(`DIAGNÓSTICO: standalone=${isInStandaloneMode}, sub=${isSubscribed}, iOS=${isIOS}, perm=${Notification.permission}`);
-            setClickCount(0);
-            return;
-        }
-        setTimeout(() => setClickCount(0), 2000);
-
         if (isSubscribed && !confirm('¿Deseas refrescar la suscripción?')) return;
 
         // iOS is extremely strict: requestPermission must be the first thing or very close to it
