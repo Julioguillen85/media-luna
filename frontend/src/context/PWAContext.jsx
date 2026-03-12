@@ -25,13 +25,13 @@ export function PWAProvider({ children }) {
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [isInStandaloneMode, setIsInStandaloneMode] = useState(false);
     const [swRegistration, setSwRegistration] = useState(null);
+    const [vapidPublicKey, setVapidPublicKey] = useState(null);
 
     useEffect(() => {
-        // 1. Detect Standalone
+        // ... (existing standalone and install prompt logic)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
         setIsInStandaloneMode(!!isStandalone);
 
-        // 2. Install prompt
         const handleBeforeInstallPrompt = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -39,15 +39,19 @@ export function PWAProvider({ children }) {
         };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-        // 3. SW Registration & Subscription Check
+        // Pre-fetch VAPID key to have it ready for the click gesture
+        fetch(`${API_URL}/push/public-key`)
+            .then(res => res.json())
+            .then(data => setVapidPublicKey(data.publicKey))
+            .catch(err => console.error("PWA: Failed to pre-fetch VAPID key", err));
+
         if ('serviceWorker' in navigator && 'PushManager' in window) {
             navigator.serviceWorker.register('/sw.js').then(registration => {
                 setSwRegistration(registration);
                 registration.pushManager.getSubscription().then(subscription => {
                     const hasSub = subscription !== null;
                     setIsSubscribed(hasSub);
-
-                    // Auto-sync with backend if granted
+                    
                     if (hasSub && Notification.permission === 'granted') {
                         fetch(`${API_URL}/push/subscribe`, {
                             method: 'POST',
@@ -78,17 +82,13 @@ export function PWAProvider({ children }) {
 
     const subscribeToPush = async (force = false) => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            alert("SOPORTE: PushManager no detectado");
+            alert("No soportado");
             return false;
         }
 
         try {
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                alert("PERMISO: Denagado (" + permission + ")");
-                return false;
-            }
-
+            // we assume permission is ALREADY being requested/checked by the caller 
+            // to keep the gesture chain as short as possible
             const registration = await navigator.serviceWorker.ready;
 
             if (force) {
@@ -96,27 +96,19 @@ export function PWAProvider({ children }) {
                 if (existingSub) await existingSub.unsubscribe();
             }
 
-            // Step 1: Public Key
-            const res = await fetch(`${API_URL}/push/public-key`);
-            if (!res.ok) {
-                alert("ERROR: No se pudo obtener la llave pública del servidor");
-                return false;
-            }
-            const { publicKey } = await res.json();
-
-            // Step 2: Browser Subscribe
-            let subscription;
-            try {
-                subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(publicKey)
-                });
-            } catch (e) {
-                alert("ERROR Navegador: " + e.message);
-                return false;
+            // Use pre-fetched key or fetch now if missing (fallback)
+            let key = vapidPublicKey;
+            if (!key) {
+                const res = await fetch(`${API_URL}/push/public-key`);
+                const data = await res.json();
+                key = data.publicKey;
             }
 
-            // Step 3: Server Subscribe
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(key)
+            });
+
             const response = await fetch(`${API_URL}/push/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -126,14 +118,16 @@ export function PWAProvider({ children }) {
             if (response.ok) {
                 setIsSubscribed(true);
                 return true;
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                alert("ERROR Servidor (" + response.status + "): " + (errorData.error || "Error desconocido"));
-                return false;
             }
+            return false;
         } catch (error) {
             console.error('PWA: Failed to subscribe:', error);
-            alert("ERROR CRÍTICO: " + error.message);
+            // If it's a DOMException: Subscription failed - no active user gesture
+            if (error.name === 'NotAllowedError' || error.message.includes('gesture')) {
+                alert("Error de gesto: Intenta pulsar la campana otra vez sin esperar.");
+            } else {
+                alert("Error: " + error.message);
+            }
             return false;
         }
     };

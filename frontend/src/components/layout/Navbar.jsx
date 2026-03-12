@@ -46,77 +46,50 @@ export default function Navbar({ setView, cart, isAdmin, setIsAdmin, setShowLogi
         }
     }, []);
 
-    const [clickCount, setClickCount] = useState(0);
-
     const handleToggleNotifications = async () => {
-        // Multi-click diagnostic (3 clicks in row)
-        setClickCount(prev => prev + 1);
-        setTimeout(() => setClickCount(0), 2000);
-
-        if (clickCount >= 2) {
+        // Multi-click diagnostic logic (kept but won't interfere unless triggered)
+        const currentCount = clickCount + 1;
+        setClickCount(currentCount);
+        
+        if (currentCount >= 3) {
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            const hasNotification = 'Notification' in window;
-            const hasPush = 'PushManager' in window;
-            const hasSW = 'serviceWorker' in navigator;
-            alert(`--- DIAGNÓSTICO PWA ---\nInstalada: ${isInStandaloneMode}\nSuscrito: ${isSubscribed}\niOS: ${isIOS}\nNotification: ${hasNotification}\nPushManager: ${hasPush}\nServiceWorker: ${hasSW}\nPermiso: ${hasNotification ? Notification.permission : 'N/A'}`);
+            alert(`DIAGNÓSTICO: standalone=${isInStandaloneMode}, sub=${isSubscribed}, iOS=${isIOS}, perm=${Notification.permission}`);
             setClickCount(0);
             return;
         }
+        setTimeout(() => setClickCount(0), 2000);
 
-        // Production logic
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const hasPush = 'PushManager' in window;
-        const hasSW = 'serviceWorker' in navigator;
+        if (isSubscribed && !confirm('¿Deseas refrescar la suscripción?')) return;
 
+        // iOS is extremely strict: requestPermission must be the first thing or very close to it
         try {
-            if (isSubscribed && !confirm('Ya estás suscrito. ¿Deseas refrescar la suscripción para asegurar que las alertas lleguen a este dispositivo?')) {
-                return;
-            }
-
             if (!('Notification' in window)) {
-                alert('ERROR: Tu navegador no soporta Notificaciones.');
-                return;
-            }
-
-            if (!hasPush || !hasSW) {
-                if (isIOS && !isInStandaloneMode) {
-                   alert('iPhone: Usa el botón "Compartir" y selecciona "Añadir a pantalla de inicio" para activar notificaciones.');
-                } else {
-                   alert(`Error de soporte PWA: Push=${hasPush}, SW=${hasSW}. Asegúrate de estar usando la app instalada.`);
-                }
-                return;
-            }
-
-            // iOS standalone check
-            if (isIOS && !isInStandaloneMode) {
-                alert('iPhone: Las notificaciones solo funcionan si añades la app a tu pantalla de inicio.');
+                alert('Tu navegador no soporta notificaciones.');
                 return;
             }
 
             if (Notification.permission === 'denied') {
-                alert('Las notificaciones están bloqueadas. Ve a Ajustes > (Buscar App o Safari) > Notificaciones y permite el acceso.');
+                alert('Permiso denegado. Ve a Ajustes > Safari/App > Notificaciones para activarlas manualmente.');
                 return;
             }
 
             setNotifStatus('loading');
+            
+            // Critical part for iOS: No awaits before this if possible
             const permission = await Notification.requestPermission();
             
             if (permission === 'granted') {
+                // Pre-fetched key in PWAContext will make this call fast and preserve gesture
                 const ok = await subscribeToPush(true); 
                 setNotifStatus(ok ? 'success' : 'idle');
-                if (ok) {
-                    alert('✅ ¡Listo! Notificaciones activadas en este dispositivo.');
-                    console.log('✅ Suscripción exitosa');
-                } else {
-                    alert('❌ Hubo un error al sincronizar con el servidor. Reintenta pronto.');
-                }
+                if (ok) alert('✅ Notificaciones activadas.');
             } else {
                 setNotifStatus('denied');
             }
         } catch (err) {
             console.error('Notification error:', err);
             setNotifStatus('idle');
-            alert('Error inesperado: ' + err.message);
+            alert('Error: ' + err.message);
         }
     };
 
