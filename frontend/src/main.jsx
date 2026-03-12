@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from '@sentry/react';
+import { BrowserTracing } from '@sentry/tracing';
 import App from './App.jsx';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
@@ -9,17 +10,11 @@ import { ThemeProvider } from './context/ThemeContext';
 import { PWAProvider } from './context/PWAContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Initialize Sentry (does nothing if DSN is empty)
 Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN || '',
     environment: import.meta.env.MODE || 'development',
-    integrations: [
-        Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration()
-    ],
+    integrations: [new BrowserTracing()],
     tracesSampleRate: 0.3,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0, // Graba replay cuando hay error
     enabled: !!import.meta.env.VITE_SENTRY_DSN
 });
 
