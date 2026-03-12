@@ -60,10 +60,12 @@ public class EmailService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("✅ Email enviado exitosamente a {} via Resend", to);
             } else {
-                log.error("❌ Resend respondió con status {}: {}", response.getStatusCode(), response.getBody());
+                log.error("❌ Resend error {} para {}: {}", response.getStatusCode(), to, response.getBody());
+                throw new RuntimeException("Resend failed: " + response.getBody());
             }
         } catch (Exception e) {
-            log.error("❌ Error enviando email via Resend a {}: {}", to, e.getMessage());
+            log.error("❌ Error enviando email via Resend a {}: {}", to, e.getMessage(), e);
+            throw e; // Re-throw to let Sentry capture it if needed
         }
     }
 
