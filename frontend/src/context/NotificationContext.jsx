@@ -10,11 +10,8 @@ export function NotificationProvider({ children }) {
     const isSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
     const [permission, setPermission] = useState(isSupported ? Notification.permission : 'denied');
 
-    useEffect(() => {
-        if (user && permission === 'default') {
-            requestPermission();
-        }
-    }, [user, permission]); // Request when user logs in
+    // We remove the automatic request because iOS ONLY allows it from a user gesture (click)
+    // and calls from useEffect will fail or be ignored.
 
     const requestPermission = async () => {
         if (!isSupported) return;

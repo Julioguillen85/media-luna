@@ -25,10 +25,12 @@ export function usePWA() {
 
     useEffect(() => {
         // Detect if the app is running in standalone mode (installed PWA)
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
         setIsInStandaloneMode(!!isStandalone);
+        console.log("PWA: Standalone mode detected:", !!isStandalone);
 
         const handleBeforeInstallPrompt = (e) => {
+            console.log("PWA: beforeinstallprompt event fired");
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
@@ -37,22 +39,30 @@ export function usePWA() {
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
         if ('serviceWorker' in navigator && 'PushManager' in window) {
+            console.log("PWA: SW and PushManager supported");
             navigator.serviceWorker.register('/sw.js').then(registration => {
+                console.log("PWA: SW Registered. Scope:", registration.scope);
                 registration.pushManager.getSubscription().then(subscription => {
                     const hasSub = subscription !== null;
                     setIsSubscribed(hasSub);
+                    console.log("PWA: Initial subscription check:", hasSub);
 
-                    // Si ya tiene permiso y suscripción, re-enviarla al backend
-                    // por si el backend se reinició (Railway) y borró sus datos
                     if (hasSub && Notification.permission === 'granted') {
                         fetch(`${API_URL}/push/subscribe`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(subscription)
-                        }).catch(err => console.error("Error auto-resubscribing:", err));
+                        }).catch(err => console.error("PWA: Auto-resubscribe error:", err));
                     }
-                });
-            }).catch(err => console.error("SW Registration failed", err));
+                }).catch(err => console.error("PWA: getSubscription error:", err));
+            }).catch(err => {
+                console.error("PWA: SW Registration failed:", err);
+            });
+        } else {
+            console.warn("PWA: SW or PushManager NOT supported");
+            const hasSW = 'serviceWorker' in navigator;
+            const hasPush = 'PushManager' in window;
+            console.log(`PWA Diagnostics: SW=${hasSW}, Push=${hasPush}, Standalone=${!!isStandalone}`);
         }
 
         return () => {
