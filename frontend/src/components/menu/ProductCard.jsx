@@ -4,6 +4,7 @@ import { isCustomizable as checkIsCustomizable, isTray } from '../../App';
 import { isDiscountActive } from '../../lunitaUtils';
 
 export default function ProductCard({ product, cart, onProductClick, removeFromCart }) {
+    const [isExpanded, setIsExpanded] = React.useState(false);
     const isSelected = cart.some(item => item.id === product.id);
     const isCustomizable = checkIsCustomizable(product) || isTray(product);
     const hasMultipleImages = product.gallery && product.gallery.length > 0;
@@ -72,9 +73,22 @@ export default function ProductCard({ product, cart, onProductClick, removeFromC
                     </h3>
                 </div>
 
-                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4 flex-1">
-                    {product.description || product.desc || 'Delicioso snack preparado al momento con los mejores ingredientes.'}
-                </p>
+                <div className="relative mb-4 flex-1">
+                    <p className={`text-sm text-slate-500 dark:text-slate-400 leading-relaxed transition-all duration-300 ${isExpanded ? '' : 'line-clamp-2'}`}>
+                        {product.description || product.desc || 'Delicioso snack preparado al momento con los mejores ingredientes.'}
+                    </p>
+                    {(product.description?.length > 60 || product.desc?.length > 60) && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsExpanded(!isExpanded);
+                            }}
+                            className="text-rose-500 dark:text-rose-400 text-[11px] font-bold uppercase tracking-wider mt-1 hover:underline"
+                        >
+                            {isExpanded ? 'Ver menos' : 'Ver más'}
+                        </button>
+                    )}
+                </div>
 
                 {/* Action Bar */}
                 <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
