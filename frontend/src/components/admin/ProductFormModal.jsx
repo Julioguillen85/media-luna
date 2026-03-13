@@ -115,8 +115,8 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
             ...(product || {}),
             ...formData,
             specifications: JSON.stringify(formData.specifications),
-            // Ensure base price is somewhat representative for snacks
-            price: formData.productType === 'SNACK' ? (formData.priceTiers?.length > 0 ? formData.priceTiers[0].price : 0) : formData.price
+            // Ensure base price is somewhat representative for snacks, but use direct price for charolas
+            price: (formData.productType === 'SNACK' && !formData.name.toLowerCase().includes('charola de snacks')) ? (formData.priceTiers?.length > 0 ? formData.priceTiers[0].price : 0) : formData.price
         });
     };
 
@@ -212,7 +212,7 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
 
                                 {/* Category + Price */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    <div className={formData.productType === 'SNACK' ? 'col-span-2' : ''}>
+                                    <div className={(formData.productType === 'SNACK' && !formData.name.toLowerCase().includes('charola de snacks')) ? 'col-span-2' : ''}>
                                         <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">Categoría</label>
                                         <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
                                             className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:border-rose-400 transition-all">
@@ -220,7 +220,7 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                                             {formData.productType === 'RENTAL' && !categories.includes('Mobiliario') && <option value="Mobiliario">Mobiliario</option>}
                                         </select>
                                     </div>
-                                    {formData.productType === 'RENTAL' && (
+                                    {(formData.productType === 'RENTAL' || formData.name.toLowerCase().includes('charola de snacks')) && (
                                         <div>
                                             <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 mb-1 uppercase tracking-widest">
                                                 Precio / Pieza

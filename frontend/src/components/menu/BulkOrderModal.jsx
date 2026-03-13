@@ -8,7 +8,8 @@ export default function BulkOrderModal({ product, products = [], customization =
 
     React.useEffect(() => {
         if (isOpen && product) {
-            setPeopleCount((product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? '1' : '30');
+            const isIndividual = (product.category?.includes('Renta') || product.productType === 'RENTAL' || product.name?.toLowerCase().includes('charola de snacks'));
+            setPeopleCount(isIndividual ? '1' : '30');
             setSplitMode(false);
             setSplitValue(0);
         }
@@ -18,7 +19,7 @@ export default function BulkOrderModal({ product, products = [], customization =
 
     const numericCount = parseInt(peopleCount) || 0;
     const isBrincolin = product?.name?.toLowerCase().includes('brincol');
-    const isRental = product?.category?.includes('Renta') || product?.productType === 'RENTAL';
+    const isRental = product?.category?.includes('Renta') || product?.productType === 'RENTAL' || product.name?.toLowerCase().includes('charola de snacks');
     const minCount = isRental ? 1 : 30;
     const maxCount = isBrincolin ? 2 : 9999;
     const step = isRental ? 1 : 10;
@@ -38,7 +39,7 @@ export default function BulkOrderModal({ product, products = [], customization =
                 <div className="p-6 bg-gradient-to-r from-rose-500 to-orange-500 dark:from-rose-900 dark:to-orange-900 text-white flex justify-between items-start shrink-0">
                     <div>
                         <h3 className="text-2xl font-bold flex items-center gap-2">
-                            {(product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? '¿Cuántas piezas? 🪑' : '¿Para cuántas personas? 👥'}
+                            {isRental ? '¿Cuántas piezas? 🪑' : '¿Para cuántas personas? 👥'}
                         </h3>
                         <p className="text-rose-100 dark:text-orange-200 text-sm mt-1">{product.name}</p>
                     </div>
@@ -151,7 +152,6 @@ export default function BulkOrderModal({ product, products = [], customization =
                     if (customization && customization.size === 'quarter') {
                         tiers = product.quarterPriceTiers || product.priceTiers || [];
                     }
-                    const minCount = (product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30;
                     const n = numericCount < minCount ? minCount : numericCount;
                     const matching = tiers.find(t => n >= t.minGuests && n <= t.maxGuests);
                     const closest = tiers.filter(t => t.minGuests <= n).sort((a, b) => b.minGuests - a.minGuests)[0];
@@ -164,7 +164,7 @@ export default function BulkOrderModal({ product, products = [], customization =
                                 ${total.toLocaleString('es-MX')} MXN
                             </span>
                             <p className="text-xs text-slate-400">
-                                precio total para {n} {(product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? (n === 1 ? 'producto' : 'productos') : 'personas'}
+                                precio total para {n} {isRental ? (n === 1 ? 'producto' : 'productos') : 'personas'}
                             </p>
                         </div>
                     ) : null;
@@ -177,7 +177,7 @@ export default function BulkOrderModal({ product, products = [], customization =
                     >
                         {splitMode
                             ? `Agregar combinación a carrito`
-                            : `Agregar ${numericCount < ((product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30) ? ((product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? 1 : 30) : numericCount} ${(product?.category?.includes('Renta') || product?.productType === 'RENTAL') ? (numericCount === 1 ? 'producto' : 'productos') : 'personas'}`
+                            : `Agregar ${numericCount < minCount ? minCount : numericCount} ${isRental ? (numericCount === 1 ? 'producto' : 'productos') : 'personas'}`
                         }
                     </button>
                 </div>

@@ -189,9 +189,14 @@ export default function App() {
   };
 
   const getPriceForProduct = (product, qty, customization = null) => {
-    // 1. Check for rental
-    if (product.productType === 'RENTAL') return product.rentalPricePerDay || 0;
+    const isTrayProd = isTray(product);
+    if (isTrayProd && (!product.priceTiers || product.priceTiers.length === 0)) {
+      return product.price || 0;
+    }
 
+    // 1. Check for rental or tray (individual pricing)
+    if (product.productType === 'RENTAL') return product.rentalPricePerDay || 0;
+    
     // 2. Select the correct tiers based on size (for bowls)
     let tiers = product.priceTiers || [];
     if (customization && customization.size === 'quarter') {
@@ -199,7 +204,10 @@ export default function App() {
     }
 
     // 3. Find matching tier for quantity
-    const n = qty < 30 ? 30 : qty;
+    // Trays don't have the 30-person minimum if they don't use tiers
+    const minQ = isTrayProd ? 1 : 30;
+    const n = qty < minQ ? minQ : qty;
+    
     const matching = (tiers || []).find(t => n >= t.minGuests && n <= t.maxGuests);
     const closest = (tiers || []).filter(t => t.minGuests <= n).sort((a, b) => b.minGuests - a.minGuests)[0];
 
