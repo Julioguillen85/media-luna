@@ -238,7 +238,7 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                                 </div>
 
                                 {/* Volume Pricing for Beverages/Snacks */}
-                                {formData.productType === 'SNACK' && (
+                                {formData.productType === 'SNACK' && !formData.name.toLowerCase().includes('charola de snacks') && (
                                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                                         <div className="flex items-center justify-between mb-2">
                                             <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Precios por Volumen</label>
@@ -295,14 +295,14 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                                             className="mt-2 w-full py-2.5 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-500 hover:text-rose-500 hover:border-rose-200 dark:hover:border-rose-900/30 hover:bg-rose-50 dark:hover:bg-rose-900/10 transition-colors flex items-center justify-center gap-1.5">
                                             <Plus size={14} /> Añadir precio por volumen
                                         </button>
-                                        {(formData.priceTiers || []).length === 0 && (
+                                        {(formData.priceTiers || []).length === 0 && !formData.name.toLowerCase().includes('charola de snacks') && (
                                             <p className="text-[10px] text-rose-500 mt-1 text-center font-medium">Debe añadir al menos un precio para que el producto sea válido.</p>
                                         )}
                                     </div>
                                 )}
 
                                 {/* Volume Pricing for 1/4 Bowls if applicable */}
-                                {formData.productType === 'SNACK' && (formData.customizable || (formData.quarterPriceTiers && formData.quarterPriceTiers.length > 0)) && (
+                                {formData.productType === 'SNACK' && !formData.name.toLowerCase().includes('charola de snacks') && (formData.customizable || (formData.quarterPriceTiers && formData.quarterPriceTiers.length > 0)) && (
                                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                                         <div className="flex items-center justify-between mb-2">
                                             <label className="block text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Precios Bowl 1/4 (Botecito)</label>
@@ -368,7 +368,7 @@ export default function ProductFormModal({ product, categories, onClose, onSave 
                                         <input type="checkbox" checked={formData.customizable}
                                             onChange={e => setFormData({ ...formData, customizable: e.target.checked })}
                                             className="w-5 h-5 text-rose-600 rounded focus:ring-rose-500 border-slate-300 dark:border-slate-600" />
-                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Producto personalizable (Bowl)</span>
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Habilitar personalización (Bases, toppings, etc.)</span>
                                     </label>
                                 )}
                             </>
