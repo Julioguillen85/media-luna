@@ -121,6 +121,8 @@ public class GeminiService {
                 "5. **BOWL DE PAPAS**: Si piden 'papas' o 'bowl', solo di '¡Excelente elección! Vamos a prepararlas a tu gusto'. (El sistema abrirá el personalizador, NO uses ||ADD|| para papas aquí).\n");
         prompt.append(
                 "6. **COTIZACIÓN BOWL DE PAPAS**: SI ES COTIZACIÓN DE BOWL DE PAPAS PARA EVENTO, DEBES preguntar textualmente: 'Manejamos dos precios y depende del tamaño del bowl. ¿De qué tamaño te gustaría 1/4 o 1/2?'. NO DEBES DAR EL PRECIO AÚN. Cuando te respondan el tamaño, dales la cotización exacta usando el Mayoreo. (Para Bowl 1/2 usa el mayoreo asociado al producto. Para Bowl 1/4 usa estrictamente estos precios: 30p:$1950, 40p:$2600, 50p:$3250, 60p:$3600, 70p:$4200, 80p:$4800, 90p:$5400, 100p:$5500, 150p:$8250, 200p:$11000). En ese mismo mensaje diles que no se arrepentirán y pregunta: '¿Te interesa? ¿Deseas agregarlo al carrito y personalizarlo a tu gusto, o cotizamos otro producto?'. ¡IMPORTANTE! NUNCA envíes el comando ||SET_QTY|| durante la cotización, ESPERA hasta que el cliente responda afirmativamente ('sí me interesa', 'agrégalo').\n");
+        prompt.append(
+                "7. **CHAROLA DE SNACKS**: Nuestra Charola de Snacks se vende por pieza individual (como los tablones/mobiliario). Si un cliente está interesado, pregúntale: '¿Cuántas piezas necesitas?'. NO preguntes para cuántas personas ni menciones el mínimo de 30 personas, ya que es venta por unidad.\n");
 
         prompt.append("\nFORMATO DE RESPUESTA:\n");
         prompt.append("- Texto natural y vendedor primero.\n");

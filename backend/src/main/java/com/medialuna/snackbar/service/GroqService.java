@@ -305,9 +305,10 @@ public class GroqService {
                 prompt.append("  - PROHIBIDO TOTALMENTE mencionar precios unitarios o hacer cálculos matemáticos. NUNCA digas '$35 por unidad', ni multipliques personas por precio. JAMÁS.\n");
                 prompt.append("  - Para los precios, LEE EXACTAMENTE EL NÚMERO DE LA TABLA DE MAYOREO. Si la tabla dice '[De 50 a 59 personas: $2500]', el precio es EXACTAMENTE $2500. Tu no calcules nada.\n");
                 prompt.append("  - ⚠️ REGLA ANTI-ERRORES: Lee con extremo cuidado el rango de personas. NUNCA des el precio de un rango mayor (ej. dar precio de 70 personas cuando pidieron 50). Verifica dos veces qué rango de la tabla aplica antes de responder.\n");
-                prompt.append("  - El servicio es MÍNIMO 30 personas. Si pide menos: 'El mínimo es 30 personas. ¿Para cuántas sería?'\n");
+                prompt.append("  - El servicio es MÍNIMO 30 personas (EXCEPTO para Charola de Snacks). Si pide menos: 'El mínimo es 30 personas. ¿Para cuántas sería?'\n");
                 prompt.append("  - El servicio dura 1 hora y 30 minutos si son menos de 50 personas. Si son 50 personas o más, el servicio dura 2 horas.\n");
                 prompt.append("  - Cuando pide un snack SIN mencionar personas: pregunta SOLO '¿Para cuántas personas es? (mínimo 30)'\n");
+                prompt.append("    (EXCEPCIÓN: Si es Charola de Snacks, pregunta cuántas piezas).\n");
                 prompt.append("  - Cuando da el número de personas: busca en priceTiers del producto.\n");
                 prompt.append("    priceTiers = [{minGuests, maxGuests, price}] donde price es el TOTAL ya calculado. Úsalo directamente.\n");
                 prompt.append("  - FLUJO OBLIGATORIO 6 PASOS:\n");
@@ -349,10 +350,11 @@ public class GroqService {
                 prompt.append("  - EXCEPCIÓN: Si el bowl es un producto ADICIONAL (el cliente ya tenía otros productos antes), después del SET_QTY agrega EXACTAMENTE: '¿Gustas agregar algo más o sería todo? 🌙'\n\n");
                 // ── CHAROLAS DE SNACKS ──
                 prompt.append("REGLA CHAROLAS DE SNACKS:\n");
-                prompt.append("  - Las Charolas NO TIENEN TAMAÑOS. Si piden una charola, NO PREGUNTES EL TAMAÑO.\n");
-                prompt.append("  - Solo pregunta para cuántas personas es y cotiza usando priceTiers.\n");
-                prompt.append("  - Cuando el cliente acepte agregar: emite ||SET_QTY:N:Charola de Snacks:precioTotal|| (donde N es el número de personas)\n");
-                prompt.append("  - N DEBE ser el número de personas (ej: si es para 30, emite ||SET_QTY:30:Charola de Snacks:1500||).\n");
+                prompt.append("  - Las Charolas NO TIENEN TAMAÑOS y NO TIENEN MÍNIMO de 30 personas.\n");
+                prompt.append("  - Se venden por pieza individual (lógica de tablón).\n");
+                prompt.append("  - Si un cliente está interesado, pregúntale: '¿Cuántas piezas necesitas?'.\n");
+                prompt.append("  - Cuando el cliente acepte agregar: emite ||SET_QTY:N:Charola de Snacks:precioTotal|| (donde N es la cantidad de PIEZAS).\n");
+                prompt.append("  - N DEBE ser la cantidad de piezas (ej: si son 5, emite ||SET_QTY:5:Charola de Snacks:1450||).\n");
                 prompt.append("  - Cuando emitas ||SET_QTY|| para Charola, tu respuesta textual debe ser: '¡Genial! Vamos a personalizar tu Charola de Snacks.'\n");
                 prompt.append("  - Si la charola es un producto ADICIONAL (ya había otros en el carrito), agrega al final: '¿Gustas agregar algo más o sería todo? 🌙'\n\n");
 
