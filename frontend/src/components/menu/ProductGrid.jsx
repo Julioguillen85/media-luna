@@ -49,7 +49,7 @@ export default function ProductGrid({
                                 <div className="h-[1px] flex-1 bg-gradient-to-r from-rose-200 via-slate-200 to-transparent dark:from-rose-900/50 dark:via-slate-800 dark:to-transparent ml-4 transition-colors duration-300" />
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 xl:gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 xl:gap-6 items-start">
                                 {catProducts.map(product => (
                                     <ProductCard
                                         key={product.id}
