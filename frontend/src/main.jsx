@@ -18,6 +18,10 @@ Sentry.init({
     enabled: !!import.meta.env.VITE_SENTRY_DSN
 });
 
+window.Sentry = Sentry;
+console.log('SENTRY DSN:', import.meta.env.VITE_SENTRY_DSN || 'NO DSN');
+console.log('SENTRY MODE:', import.meta.env.MODE);
+
 console.info('Media Luna Frontend Application Initialized 🚀');
 
 ReactDOM.createRoot(document.getElementById('root')).render(

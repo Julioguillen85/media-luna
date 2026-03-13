@@ -72,7 +72,7 @@ export default function ProductCard({ product, cart, onProductClick, removeFromC
                     </h3>
                 </div>
 
-                <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4 flex-1">
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4 flex-1">
                     {product.description || product.desc || 'Delicioso snack preparado al momento con los mejores ingredientes.'}
                 </p>
 
