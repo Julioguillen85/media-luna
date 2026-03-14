@@ -48,6 +48,8 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
     useEffect(() => { cartRef.current = cart; }, [cart]);
     const [useAI, setUseAI] = useState(true);
     const [orderSubmitted, setOrderSubmitted] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [feedbackData, setFeedbackData] = useState({ rating: 0, comment: '' });
 
     const [isMinimized, setIsMinimized] = useState(false);
     const [isFullSize, setIsFullSize] = useState(true);
@@ -790,6 +792,22 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
         }, 600);
     };
 
+    const handleFeedbackSubmit = async () => {
+        if (feedbackData.rating === 0) return;
+        try {
+            await fetch(`${API_URL}/chat-feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(feedbackData)
+            });
+            setShowFeedback(false);
+            setFeedbackData({ rating: 0, comment: '' });
+            setMessages(prev => [...prev, { role: 'bot', text: '¡Gracias por tus comentarios! Nos ayudan a mejorar. 🌙' }]);
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+        }
+    };
+
 
     // ← esta línea ya existe
     if (!isOpen) return null;
@@ -991,6 +1009,63 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
             {!isMinimized && (
                 <>
+                <div className="px-4 py-2 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm border-b border-white/20 flex justify-center">
+                    {!showFeedback ? (
+                        <div data-visible="true" className="dx-chat-ai__floating-button">
+                            <button 
+                                type="button"
+                                onClick={() => setShowFeedback(true)}
+                                className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors py-1 uppercase tracking-wider"
+                            >
+                                <span className="chat-ai-star-stroked">
+                                    <svg width="18" height="18" viewBox="0 0 32 33" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M15.8382 25.3808L6.94758 29.9678L8.64553 20.2524L1.45288 13.372L11.3929 11.9545L15.8382 3.11523L20.2835 11.9545L30.2235 13.372L23.0308 20.2524L24.7288 29.9678L15.8382 25.3808Z" fill="#3483FA"></path>
+                                    </svg>
+                                </span> 
+                                Evalúa esta conversación
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-rose-100 dark:border-rose-900/30 animate-fade-in w-full">
+                            <h4 className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 text-center">¿Cómo fue tu experiencia?</h4>
+                            <div className="flex justify-around mb-3">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        onClick={() => setFeedbackData(prev => ({ ...prev, rating: star }))}
+                                        className={`transition-transform hover:scale-125 ${feedbackData.rating >= star ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600'}`}
+                                    >
+                                        <svg width="20" height="20" viewBox="0 0 32 33" fill="currentColor">
+                                            <path d="M15.8382 25.3808L6.94758 29.9678L8.64553 20.2524L1.45288 13.372L11.3929 11.9545L15.8382 3.11523L20.2835 11.9545L30.2235 13.372L23.0308 20.2524L24.7288 29.9678L15.8382 25.3808Z"></path>
+                                        </svg>
+                                    </button>
+                                ))}
+                            </div>
+                            <textarea
+                                placeholder="Déjanos un comentario..."
+                                value={feedbackData.comment}
+                                onChange={(e) => setFeedbackData(prev => ({ ...prev, comment: e.target.value }))}
+                                className="w-full text-[10px] bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1.5 focus:outline-none focus:border-rose-400 min-h-[40px] resize-none mb-2 text-slate-700 dark:text-slate-300"
+                            />
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => setShowFeedback(false)}
+                                    className="flex-1 text-[9px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 py-1"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={handleFeedbackSubmit}
+                                    disabled={feedbackData.rating === 0}
+                                    className={`flex-1 text-[9px] font-bold py-1.5 rounded-lg transition-all ${feedbackData.rating > 0 ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+                                >
+                                    Enviar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white/60 dark:bg-slate-900/80 scroll-smooth">
@@ -1200,6 +1275,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             </div>
 
             {/* Checkout buttons fully managed by AI now */}
+            
             {/* Input */}
             <ChatInput
                 input={input}
