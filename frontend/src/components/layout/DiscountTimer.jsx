@@ -73,7 +73,7 @@ export default function DiscountTimer() {
                             <Clock size={24} className="text-white animate-pulse" />
                         </div>
                         <div>
-                            <h3 className="font-extrabold text-lg leading-tight uppercase tracking-wide">¡15% de Descuento!</h3>
+                            <h3 className="font-extrabold text-lg leading-tight uppercase tracking-wide">¡10% de Descuento!</h3>
                             <p className="text-rose-100 text-sm font-medium flex items-center gap-1">¡Si apartas tu fecha hoy! <span className="text-base animate-pulse">💣</span></p>
                         </div>
                     </div>

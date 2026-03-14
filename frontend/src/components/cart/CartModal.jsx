@@ -71,7 +71,7 @@ export default function CartModal({ cart, onClose, removeFromCart, onContinueChe
                         {cart.some(i => i.totalPrice > 0) && (() => {
                             const subtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
                             const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
-                            const discount = snackSubtotal * 0.15;
+                            const discount = snackSubtotal * 0.10;
                             const total = subtotal - discount;
 
                             if (snackSubtotal === 0) {

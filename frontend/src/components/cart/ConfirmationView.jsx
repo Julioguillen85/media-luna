@@ -5,13 +5,13 @@ import { isDiscountActive } from '../../lunitaUtils';
 const BUSINESS_PHONE = "523123099318";
 
 export default function ConfirmationView({ order, onBack }) {
-    // 15% discount only active from 8 AM to 10 PM
+    // 10% discount only active from 8 AM to 10 PM
     const discountApplies = isDiscountActive();
 
     // Calculate totals
     const subtotal = (order.items || []).reduce((acc, item) => acc + (item.totalPrice || 0), 0);
     const snackSubtotal = (order.items || []).filter(item => !item.isRental && !item.category?.includes('Renta') && item.productType !== 'RENTAL').reduce((acc, item) => acc + (item.totalPrice || 0), 0);
-    const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+    const discountAmount = discountApplies ? snackSubtotal * 0.10 : 0;
     const total = subtotal - discountAmount;
 
     // Build items generic text for WhatsApp

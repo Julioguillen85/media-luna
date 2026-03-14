@@ -475,7 +475,7 @@ export default function App() {
     const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
     const rawSubtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
     const discountApplies = isDiscountActive();
-    const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+    const discountAmount = discountApplies ? snackSubtotal * 0.10 : 0;
     const finalTotal = rawSubtotal - discountAmount;
 
     // Create order object
