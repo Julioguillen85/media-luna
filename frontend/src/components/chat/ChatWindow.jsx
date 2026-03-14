@@ -53,6 +53,27 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
     const [isMinimized, setIsMinimized] = useState(false);
     const [isFullSize, setIsFullSize] = useState(true);
+    const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.visualViewport) {
+                setViewportHeight(window.visualViewport.height);
+            } else {
+                setViewportHeight(window.innerHeight);
+            }
+        };
+
+        window.visualViewport?.addEventListener('resize', handleResize);
+        window.visualViewport?.addEventListener('scroll', handleResize);
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.visualViewport?.removeEventListener('resize', handleResize);
+            window.visualViewport?.removeEventListener('scroll', handleResize);
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
 
     useEffect(() => {
         if (isOpen && !isMinimized) {
@@ -815,9 +836,10 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
     return (
         <div 
             className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out animate-fade-in border border-white/70 shadow-[0_20px_70px_rgba(0,0,0,0.15)] bg-white dark:bg-slate-900 glass-panel
-                ${isFullSize ? 'inset-0 w-full h-full max-w-none rounded-none' : 'bottom-6 right-6 w-full max-w-sm rounded-3xl'}
+                ${isFullSize ? 'inset-0 w-full max-w-none rounded-none' : 'bottom-6 right-6 w-full max-w-sm rounded-3xl'}
                 ${isMinimized ? (isFullSize ? 'h-[72px] bottom-0 top-auto' : 'h-[72px]') : (isFullSize ? 'h-full' : 'h-[500px]')}
             `}
+            style={(isFullSize && !isMinimized) ? { height: `${viewportHeight}px` } : {}}
         >
             {/* Modal cotización */}
             {quoteModal.open && (
