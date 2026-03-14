@@ -10,9 +10,10 @@ export function ThemeProvider({ children }) {
             if (saved) {
                 return saved === 'dark';
             }
-            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // Default to dark mode instead of following system preference or defaulting to false
+            return true;
         }
-        return false;
+        return true;
     });
 
     useEffect(() => {
