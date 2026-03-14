@@ -54,7 +54,7 @@ export default function CartSidebar({ cart, removeFromCart, openBot, onCheckout 
                         ))}
                         {total > 0 && (() => {
                             const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
-                            const discountAmount = snackSubtotal * 0.15;
+                            const discountAmount = snackSubtotal * 0.10;
                             const discountTotal = total - discountAmount;
 
                             if (snackSubtotal === 0) {

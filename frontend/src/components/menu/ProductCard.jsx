@@ -45,7 +45,7 @@ export default function ProductCard({ product, cart, onProductClick, removeFromC
                     )}
                     {isDiscountActive() && (!product.isRental && !product.category?.includes('Renta') && product.productType !== 'RENTAL' && product.category !== 'Muebles') && (
                         <div className="bg-rose-500/90 backdrop-blur-sm text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg tracking-widest uppercase flex items-center gap-1">
-                            <Sparkles size={10} className="animate-pulse" /> 15% OFF
+                            <Sparkles size={10} className="animate-pulse" /> 10% OFF
                         </div>
                     )}
                 </div>

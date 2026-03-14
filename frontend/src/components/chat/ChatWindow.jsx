@@ -206,7 +206,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                 // ── GUARD: bloquear SET_QTY si el cliente no confirmó ──
                 const lastBotMessage = messages.filter(m => m.role === 'bot').slice(-1)[0]?.text || '';
 
-                const botAskedConfirmation = /agrego al carrito|lo agrego|agregarlo|confirmas|deseas agregar|añado|es correcto|¿correcto|correcto\?|le parece bien|así quedamos|proceder|procedemos|te parece|confirmamos|esta combinación|esta opcion/i.test(lastBotMessage);
+                const botAskedConfirmation = /agrego|agregue|agregamos|añado|añada|agregarlo|agregarlo|confirmas|confirmamos|deseas agregar|¿deseas|quieres que|¿quieres|lo añado|lo agregue|añadirlo|confirmar|confirmar\?|es correcto|¿correcto|correcto\?|le parece bien|así quedamos|proceder|procedemos|te parece|confirmamos|esta combinación|esta opcion/i.test(lastBotMessage);
 
                 const isDirectRentalOrder = /agrega|ponme|dame|añade|quiero|necesito|me das|me pones/i.test(text) && /tablon|mesa|brincolin|silla/i.test(text);
 
@@ -254,16 +254,36 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                     }
 
                     if (productToUpdate) {
-                        if (isCustomizable(productToUpdate) || isTray(productToUpdate)) {
+                        // NORMALIZATION: Check if this base product ID is already in the cart
+                        const existingItemInCart = cart.find(item => item.id === productToUpdate.id);
+                        const alreadyInCart = !!existingItemInCart;
+
+                        // GUARD: Never open builder if already in cart
+                        if ((isCustomizable(productToUpdate) || isTray(productToUpdate)) && !alreadyInCart) {
                             interceptedCustomizable = { ...productToUpdate, quantity: qty, priceOverride: priceOverride };
                         } else if (onSetQuantity) {
-                            onSetQuantity(productToUpdate, qty, null, priceOverride, productToUpdate.productType === 'RENTAL');
-                            const existingIndex = simulatedCart.findIndex(item => item.id === productToUpdate.id);
-                            if (existingIndex >= 0) {
-                                if (qty > 0) simulatedCart[existingIndex] = { ...simulatedCart[existingIndex], quantity: qty, totalPrice: (priceOverride !== null ? priceOverride : (simulatedCart[existingIndex].rentalPricePerDay || simulatedCart[existingIndex].price) * qty) };
-                                else simulatedCart.splice(existingIndex, 1);
+                            // SYNC: If it exists, use its customization object instead of null to prevent duplicates
+                            const customizationToUse = existingItemInCart ? existingItemInCart.customization : null;
+                            onSetQuantity(productToUpdate, qty, customizationToUse, priceOverride, productToUpdate.productType === 'RENTAL');
+                            
+                            const existingIdxSim = simulatedCart.findIndex(item => item.id === productToUpdate.id);
+                            if (existingIdxSim >= 0) {
+                                if (qty > 0) {
+                                    simulatedCart[existingIdxSim] = { 
+                                        ...simulatedCart[existingIdxSim], 
+                                        quantity: qty, 
+                                        totalPrice: (priceOverride !== null ? priceOverride : (simulatedCart[existingIdxSim].rentalPricePerDay || simulatedCart[existingIdxSim].price) * qty) 
+                                    };
+                                } else {
+                                    simulatedCart.splice(existingIdxSim, 1);
+                                }
                             } else if (qty > 0) {
-                                simulatedCart.push({ ...productToUpdate, quantity: qty, isRental: productToUpdate.productType === 'RENTAL', totalPrice: (priceOverride !== null ? priceOverride : (productToUpdate.rentalPricePerDay || productToUpdate.price) * qty) });
+                                simulatedCart.push({ 
+                                    ...productToUpdate, 
+                                    quantity: qty, 
+                                    isRental: productToUpdate.productType === 'RENTAL', 
+                                    totalPrice: (priceOverride !== null ? priceOverride : (productToUpdate.rentalPricePerDay || productToUpdate.price) * qty) 
+                                });
                             }
                         }
                     }
@@ -305,7 +325,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
 
                 // ── STEP 6: Handle special UI actions ──
                 // If a customizable product was intercepted, force the bowl builder flow
-                if (interceptedCustomizable) {
+                if (interceptedCustomizable && !orderCompleteData) {
                     setProductToCustomize(interceptedCustomizable);
 
                     let textResult = displayMessage;
@@ -351,7 +371,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                 }
 
                 // Normal bowl builder request without prior ADD/SET_QTY commands
-                if (aiResponse.action === 'start_bowl_builder') {
+                if (aiResponse.action === 'start_bowl_builder' && !orderCompleteData) {
                     // ── GUARD: solo activar bowl builder si el último mensaje del bot
                     // mencionaba papas/bowl, no cualquier otro producto ──
                     const lastBotText = messages.filter(m => m.role === 'bot').slice(-1)[0]?.text || '';
@@ -369,7 +389,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                     return { text: displayMessage };
                 }
 
-                if (aiResponse.action === 'start_tray_builder') {
+                if (aiResponse.action === 'start_tray_builder' && !orderCompleteData) {
                     const lastBotText = messages.filter(m => m.role === 'bot').slice(-1)[0]?.text || '';
                     if (/charola|snack/i.test(lastBotText)) {
                         const trayProduct = products.find(p => isTray(p)) || products.find(p => p.name.toLowerCase().includes('charola'));
@@ -392,7 +412,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                         text: displayMessage
                     };
                 }
-                if (aiResponse.action === 'show_menu') {
+                if (aiResponse.action === 'show_menu' && !orderCompleteData) {
                     const snacksAndDrinks = products.filter(
                         p => p.productType !== 'RENTAL'
                     );
@@ -590,9 +610,9 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
         const discountApplies = isDiscountActive();
         let discountAmount = 0;
         if (discountApplies && total > 0) {
-            discountAmount = total * 0.15;
+            discountAmount = total * 0.10;
             total = total - discountAmount;
-            lines.push(`\n🎁 *Descuento 15% (Apartado Hoy): -$${discountAmount.toLocaleString('es-MX')}*`);
+            lines.push(`\n🎁 *Descuento 10% (Apartado Hoy): -$${discountAmount.toLocaleString('es-MX')}*`);
         }
 
         const totalLine = total > 0 ? `\n💰 *Total estimado: $${total.toLocaleString('es-MX')} MXN*` : '';
@@ -698,7 +718,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             const snackSubtotal = effectiveCart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
             const rawSubtotal = effectiveCart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
             const discountApplies = isDiscountActive();
-            const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+            const discountAmount = discountApplies ? snackSubtotal * 0.10 : 0;
             const finalTotal = rawSubtotal - discountAmount;
 
             const response = await fetch(`${API_URL}/orders`, {
@@ -720,6 +740,10 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
             });
             console.log('Pedido enviado automáticamente al backend');
             if (response.ok) {
+                // Clear cart after successful submission
+                effectiveCart.forEach(item => {
+                    if (onSetQuantity) onSetQuantity(item, 0, item.customization);
+                });
                 return await response.json();
             }
             return null;
@@ -775,7 +799,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                     <div className="bg-white rounded-2xl p-5 mx-4 shadow-xl w-full max-w-sm">
                         <h3 className="font-bold text-slate-800 text-sm mb-1">Detalles de Cotización 📋</h3>
                         <p className="text-xs text-rose-600 font-semibold bg-rose-50 p-2 rounded-lg mb-4">
-                            ¡NUEVO! 🎁 ¡Aparta tu fecha HOY y recibe un -15% de descuento al instante en tu cotización!
+                            ¡NUEVO! 🎁 ¡Aparta tu fecha HOY y recibe un -10% de descuento al instante en tu cotización!
                         </p>
 
                         <div className="flex flex-col gap-3">
@@ -939,7 +963,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                             let subtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
                             const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
                             const discountApplies = true;
-                            const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+                            const discountAmount = discountApplies ? snackSubtotal * 0.10 : 0;
                             const total = subtotal - discountAmount;
 
                             return (
@@ -947,7 +971,7 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                                     {/* Header */}
                                     <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 px-4 py-2.5 border-b border-slate-100 dark:border-slate-700/50 flex justify-between items-center">
                                         <p className="text-xs font-bold text-slate-700 dark:text-slate-300">📋 Resumen final</p>
-                                        {discountApplies && <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1"><span className="animate-pulse">✨</span> 15% OFF</span>}
+                                        {discountApplies && <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1"><span className="animate-pulse">✨</span> 10% OFF</span>}
                                     </div>
                                     {/* Items */}
                                     <div className="px-4 py-3 space-y-2">
@@ -978,16 +1002,21 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                                     {/* Actions */}
                                     <div className="px-4 pb-4">
                                         <button
-                                            onClick={() => {
-                                                submitOrderToBackend(); // Se mandará con base en customerData y cart
-
+                                            onClick={async () => {
                                                 // Disable this button on the current message
                                                 const updatedMessages = [...messages];
+                                                // Submit order and get response
+                                                const orderResponse = await submitOrderToBackend();
+                                                const orderId = orderResponse?.id || null;
+
                                                 const currentMsgIndex = updatedMessages.findIndex(m => m === msg);
                                                 if (currentMsgIndex !== -1) {
                                                     updatedMessages[currentMsgIndex].showOrderSummary = false;
                                                     setMessages(updatedMessages);
                                                 }
+
+                                                // Snapshot current cart for the summary
+                                                const cartSnapshot = [...cart];
 
                                                 // Append success response with WhatsApp fallback
                                                 setMessages(prev => [
@@ -995,7 +1024,9 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                                                     {
                                                         role: 'bot',
                                                         text: "¡Perfecto! 🎉 Tu pedido ha sido registrado en el sistema. Puedes esperar a que te contactemos, o si lo prefieres, puedes agilizar tu pedido enviándolo directo por WhatsApp con el botón de abajo. 👇",
-                                                        whatsappCta: true
+                                                        whatsappCta: true,
+                                                        cartSnapshot: cartSnapshot,
+                                                        orderId: orderId // 🆔 Store ID here
                                                     }
                                                 ]);
                                                 setBotState('IDLE');
@@ -1009,38 +1040,44 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                                 </div>
                             );
                         })()}
-                        {msg.whatsappCta && cart.length > 0 && (() => {
-                            let subtotal = cart.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
-                            const snackSubtotal = cart.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+                        {msg.whatsappCta && (cart.length > 0 || msg.cartSnapshot) && (() => {
+                            const itemsToUse = msg.cartSnapshot || cart;
+                            let subtotal = itemsToUse.reduce((acc, i) => acc + (i.totalPrice || 0), 0);
+                            const snackSubtotal = itemsToUse.filter(i => !i.isRental && !i.category?.includes('Renta') && i.productType !== 'RENTAL').reduce((acc, i) => acc + (i.totalPrice || 0), 0);
                             const discountApplies = true;
-                            const discountAmount = discountApplies ? snackSubtotal * 0.15 : 0;
+                            const discountAmount = discountApplies ? snackSubtotal * 0.10 : 0;
                             const total = subtotal - discountAmount;
 
-                            let waItemsText = cart.map(i => `• ${i.name} ×${i.quantity || 1}${i.totalPrice ? ` — $${i.totalPrice.toLocaleString('es-MX')}` : ''}`).join('\n');
+                            let waItemsText = itemsToUse.map(i => `• ${i.name} ×${i.quantity || 1}${i.totalPrice ? ` — $${i.totalPrice.toLocaleString('es-MX')}` : ''}`).join('\n');
                             if (discountApplies && total > 0) {
-                                waItemsText += `\n🎁 Descuento 15% (Apartado Hoy): -$${discountAmount.toLocaleString('es-MX')}`;
+                                waItemsText += `\n🎁 Descuento 10% (Apartado Hoy): -$${discountAmount.toLocaleString('es-MX')}`;
                             }
 
                             const waText = encodeURIComponent(
                                 `🌙 *PEDIDO MEDIA LUNA SNACK BAR*\n\n` +
+                                (msg.orderId ? `🆔 *Orden ID:* #${msg.orderId}\n` : '') +
                                 `👤 *Cliente:* ${customerData.name || 'No especificado'}\n` +
                                 `📱 *Teléfono:* ${customerData.phone || 'No especificado'}\n` +
                                 `📧 *Correo:* ${customerData.email || 'No especificado'}\n` +
                                 `📍 *Lugar:* ${customerData.eventLocation || 'No especificado'}\n` +
                                 `📅 *Fecha:* ${customerData.date || 'No especificado'}\n` +
                                 `🕐 *Hora:* ${customerData.time || 'No especificado'}\n\n` +
-                                `📦 *PRODUCTOS:*\n${waItemsText}${total > 0 ? `\n\n💰 *Total estimado: $${total.toLocaleString('es-MX')} MXN*` : ''}\n\n💬 Confirmo este pedido. ¡Gracias! 😊`
+                                `📦 *PRODUCTOS:*\n${waItemsText}${total > 0 ? `\n\n💰 *Total estimado: $${total.toLocaleString('es-MX')} MXN*` : ''}\n\n` +
+                                `👉 *Solicitud:* Hola, acabo de realizar esta solicitud y quiero saber si tienen disponibilidad para agendar mi evento en la fecha y hora indicadas. ¡Gracias! 😊`
                             );
                             return (
                                 <div className="mt-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden w-full">
                                     {/* Header */}
                                     <div className="bg-gradient-to-r from-rose-50 to-amber-50 dark:from-rose-900/20 dark:to-amber-900/20 px-4 py-2.5 border-b border-slate-100 dark:border-slate-700/50 flex justify-between items-center">
-                                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">📋 Resumen de tu pedido</p>
-                                        {discountApplies && <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1"><span className="animate-pulse">✨</span> 15% OFF</span>}
+                                        <div className="flex flex-col">
+                                            <p className="text-xs font-bold text-slate-700 dark:text-slate-300">📋 Resumen de tu pedido</p>
+                                            {msg.orderId && <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Orden ID: #{msg.orderId}</p>}
+                                        </div>
+                                        {discountApplies && <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm flex items-center gap-1"><span className="animate-pulse">✨</span> 10% OFF</span>}
                                     </div>
                                     {/* Items */}
                                     <div className="px-4 py-3 space-y-2">
-                                        {cart.map((item, idx) => (
+                                        {itemsToUse.map((item, idx) => (
                                             <div key={idx} className="flex justify-between items-center text-xs">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 font-bold px-1.5 py-0.5 rounded-full text-[10px]">×{item.quantity || 1}</span>
