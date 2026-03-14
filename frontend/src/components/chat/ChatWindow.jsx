@@ -49,13 +49,16 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
     const [useAI, setUseAI] = useState(true);
     const [orderSubmitted, setOrderSubmitted] = useState(false);
 
+    const [isMinimized, setIsMinimized] = useState(false);
+    const [isFullSize, setIsFullSize] = useState(true);
+
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !isMinimized) {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
             // Focus input when opened
             setTimeout(() => inputRef.current?.focus(), 100);
         }
-    }, [messages, isOpen]);
+    }, [messages, isOpen, isMinimized]);
 
     // ============================================
     // GEMINI AI INTEGRATION
@@ -792,7 +795,12 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-6 right-6 w-full max-w-sm glass-panel rounded-3xl z-50 flex flex-col overflow-hidden h-[500px] animate-fade-in border border-white/70 shadow-[0_20px_70px_rgba(0,0,0,0.15)]">
+        <div 
+            className={`fixed z-50 flex flex-col overflow-hidden transition-all duration-300 ease-in-out animate-fade-in border border-white/70 shadow-[0_20px_70px_rgba(0,0,0,0.15)] bg-white dark:bg-slate-900 glass-panel
+                ${isFullSize ? 'inset-0 w-full h-full max-w-none rounded-none' : 'bottom-6 right-6 w-full max-w-sm rounded-3xl'}
+                ${isMinimized ? (isFullSize ? 'h-[72px] bottom-0 top-auto' : 'h-[72px]') : (isFullSize ? 'h-full' : 'h-[500px]')}
+            `}
+        >
             {/* Modal cotización */}
             {quoteModal.open && (
                 <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center rounded-3xl">
@@ -916,19 +924,73 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                 </div>
             )}
             {/* Header */}
-            <div className="bg-gradient-to-r from-slate-900 via-rose-600 to-amber-400 p-4 text-white flex justify-between items-center shadow-md">
+            <div className="bg-gradient-to-r from-slate-900 via-rose-600 to-amber-400 p-4 text-white flex justify-between items-center shadow-md select-none shrink-0">
                 <div className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm"><Bot size={22} /></div>
-                    <div>
-                        <h3 className="font-bold text-base">Lunita IA 🌙</h3>
+                    <div className="cursor-pointer" onClick={() => setIsMinimized(!isMinimized)}>
+                        <h3 className="font-bold text-base flex items-center gap-2">
+                            Lunita IA 🌙
+                            {isMinimized && <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full animate-pulse">Minimizada</span>}
+                        </h3>
                         <span className="text-xs text-rose-100 flex items-center gap-1 opacity-90">
                             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_#4ade80]"></span>
                             En línea
                         </span>
                     </div>
                 </div>
-                <button onClick={onClose} className="hover:bg-white/20 p-1.5 rounded-full transition-colors"><X size={20} /></button>
+                
+                <div className="chat-ai-dialog__header__content__right flex items-center gap-0">
+                    <button 
+                        type="button" 
+                        className="andes-button andes-button--small andes-button--transparent p-2 hover:bg-white/10 rounded-lg transition-colors group" 
+                        id=":r6:" 
+                        aria-label="Minimizar"
+                        onClick={() => setIsMinimized(!isMinimized)}
+                    >
+                        <span className="andes-button__content">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1.99902 8.60063H13.999V7.40063H1.99902V8.60063Z" fill="white"></path>
+                            </svg>
+                        </span>
+                    </button>
+                    <button 
+                        type="button" 
+                        className="andes-button andes-button--small andes-button--transparent p-2 hover:bg-white/10 rounded-lg transition-colors group" 
+                        id=":r7:"
+                        onClick={() => {
+                            setIsFullSize(!isFullSize);
+                            if (isMinimized) setIsMinimized(false);
+                        }}
+                        title={isFullSize ? "Ventana" : "Pantalla completa"}
+                    >
+                        <span className="andes-button__content">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M9.15102 3.20122H11.9554L8.76577 6.39084L9.6143 7.23937L12.801 4.05264V6.85024H14.001V2.00122H9.15102V3.20122ZM6.84878 12.7988L4.04441 12.7988L7.23403 9.60919L6.3855 8.76066L3.19878 11.9474L3.19878 9.14979H1.99878V13.9988H6.84878V12.7988Z" fill="white"></path>
+                            </svg>
+                        </span>
+                    </button>
+                    <button 
+                        type="button" 
+                        className="andes-button andes-button--small andes-button--transparent p-2 hover:bg-white/10 rounded-lg transition-colors group" 
+                        id=":r8:" 
+                        aria-label="Cerrar"
+                        onClick={() => {
+                            setIsMinimized(false);
+                            setIsFullSize(false);
+                            onClose();
+                        }}
+                    >
+                        <span className="andes-button__content">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.4485 11.5995L8.87116 8.02215L12.4485 4.39434L11.594 3.55178L8.02261 7.1736L4.40077 3.55176L3.55225 4.40029L7.18003 8.02807L3.65246 11.6054L4.50692 12.448L8.02858 8.87662L11.6 12.448L12.4485 11.5995Z" fill="white"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
             </div>
+
+            {!isMinimized && (
+                <>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white/60 dark:bg-slate-900/80 scroll-smooth">
@@ -1146,6 +1208,8 @@ export default function ChatWindow({ isOpen, onClose, products, options, cart, o
                 isLoading={isTyping}
                 inputRef={inputRef}
             />
+                </>
+            )}
         </div>
     );
 }
